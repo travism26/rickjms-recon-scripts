@@ -24,6 +24,7 @@ do
 	if grep -q "https://$line" $INPUT_FILE; then
 		if grep -q "https://$line" $OUTPUT_FILE; then
 			# echo "already exists skipping"
+			echo "exists"
 		else
 			# echo "Found https adding to $OUTPUT_FILE"
 			grep "https://$line" $INPUT_FILE >> $OUTPUT_FILE
@@ -31,6 +32,7 @@ do
 	else
 		if grep -q "http://$line" $OUTPUT_FILE; then
 			# echo "$line already exists skipping"
+			echo "exists"
 		else
 			# echo "Default http adding to $OUTPUT_FILE"
 			grep "http://$line" $INPUT_FILE >> $OUTPUT_FILE

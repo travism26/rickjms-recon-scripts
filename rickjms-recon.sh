@@ -473,11 +473,11 @@ function run_subjack() {
 	local TAKEOVEROUT="potential-takeovers.out"
 	debug "run_subjack($USERIN)"
 	if isDryRun; then
-		echo "subjack -w $USERIN -t 100 -timeout 30 -ssl -c ~/tools/pentest_tools/subjack/fingerprints.json -v 3 -o $POST_SCAN_ENUM/$TAKEOVEROUT"
+		echo "subjack -w $USERIN -t 100 -timeout 30 -ssl -c ~/wordlists/fingerprints.json -v 3 -o $POST_SCAN_ENUM/$TAKEOVEROUT"
 	else
 		info "Checking for subdomain takeovers with subjack"
 		subjack -w $USERIN -t 100 -timeout 30  \
--ssl -c ~/tools/pentest_tools/subjack/fingerprints.json -v 3 -o $POST_SCAN_ENUM/$TAKEOVEROUT
+-ssl -c ~/wordlists/fingerprints.json -v 3 -o $POST_SCAN_ENUM/$TAKEOVEROUT
 	fi
 }
 
@@ -510,14 +510,18 @@ function run_fff() {
 # Similar to above commands: run_asserfinder_with_file()
 function run_sublister() {
 	local USERIN="$1"
-	local SUBLISTEROUT="sublist3r.host.out"
+	local SUBLISTEROUT="sublist3r.$USERIN.out"
+	local SUBLIST_OUT="sublister.host.out"
 	debug "run_sublister($USERIN)"
 	# python3 ~/tools/recon/Sublist3r/sublist3r.py -d netflix.com
 	if isDryRun; then
 		echo "python3 ~/tools/recon/Sublist3r/sublist3r.py -d $USERIN"
 	else
 		info "Running sublist3r -d $USERIN"
-		python3 ~/tools/recon/Sublist3r/sublist3r.py -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT
+		# python3 ~/tools/recon/Sublist3r/
+		sublist3r.py -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT
+		info "cat $SCAN_FOLDER/$SUBLISTEROUT | anew $SCAN_FOLDER/$SUBLIST_OUT"
+		cat $SCAN_FOLDER/$SUBLISTEROUT | anew $SCAN_FOLDER/$SUBLIST_OUT
 	fi
 }
 
@@ -568,6 +572,7 @@ function generate_folders() {
 		fi
 		if isDryRun; then
 				echo "mkdir -p $top_path"
+				mkdir -p $top_path
 		else
 			mkdir -p $top_path
 			debug "Created directory:$top_path"
@@ -674,7 +679,7 @@ function consolidateScanInformation() {
 	local OUTPUT_FILE="$1"
 	local tmp_consolidate_hosts=$(mktemp /tmp/rickjms-recon.XXXXXX)
 	warn "Please ensure you have .scope file to ensure youre within scope"
-	find $SCAN_FOLDER -iname  "*host.out" | xargs -n1 -I{} sh -c 'cat {}' >> $tmp_consolidate_hosts
+	find $SCAN_FOLDER -iname  "*host.out" | xargs -n1 -I{} sh -c 'anew {}' >> $tmp_consolidate_hosts
 	# if inscopePassed; then
 	info "Running 'inscope' to ensure targets are inscope"
 	cat $tmp_consolidate_hosts | inscope >> $OUTPUT_FILE
@@ -694,6 +699,7 @@ function run_scanners() {
 	run_crtsh_with_file $TARGETS
 	run_tls_bufferover_with_file $TARGETS
 	run_subfinder $TARGETS
+	run_sublister_with_file $TARGETS
 
 	# This file will be all the *.host.out files cat >> $ALL_HOST_DATA 
 	# allowing us to run tools against this to find extra stuff
