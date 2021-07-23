@@ -114,5 +114,6 @@ function create_symlink() {
 
 ##### MAIN METHOD #####
 # install_go
+install_packages
 install_go_tools
 install_git_tools
