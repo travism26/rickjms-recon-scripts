@@ -519,7 +519,7 @@ function run_sublister() {
 	else
 		info "Running sublist3r -d $USERIN"
 		# python3 ~/tools/recon/Sublist3r/
-		sublist3r.py -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT
+		sublist3r -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT
 		info "cat $SCAN_FOLDER/$SUBLISTEROUT | anew $SCAN_FOLDER/$SUBLIST_OUT"
 		cat $SCAN_FOLDER/$SUBLISTEROUT | anew $SCAN_FOLDER/$SUBLIST_OUT
 	fi
@@ -679,9 +679,10 @@ function consolidateScanInformation() {
 	local OUTPUT_FILE="$1"
 	local tmp_consolidate_hosts=$(mktemp /tmp/rickjms-recon.XXXXXX)
 	warn "Please ensure you have .scope file to ensure youre within scope"
-	find $SCAN_FOLDER -iname  "*host.out" | xargs -n1 -I{} sh -c 'anew {}' >> $tmp_consolidate_hosts
+	find $SCAN_FOLDER -iname  "*host.out" | xargs -n1 -I{} sh -c "cat {} | anew $tmp_consolidate_hosts"
 	# if inscopePassed; then
 	info "Running 'inscope' to ensure targets are inscope"
+	info "Saving output to $OUTPUT_FILE"
 	cat $tmp_consolidate_hosts | inscope >> $OUTPUT_FILE
 	# else
 	# 	warn "Its best to use the .scope file to makesure youre within hacker scope"
