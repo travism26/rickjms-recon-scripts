@@ -539,6 +539,35 @@ function run_sublister_with_file() {
 	done < "$FILEIN"
 }
 
+## JS linkfinder 
+## RUN on alive hosts so this will need httprobe output.
+function run_linkfinder() {
+	local USERIN="$1"
+	temp="${USERIN#*//}" 	# This removes the http(s)://
+	temp="${temp%/}" 		# This removes the trailing /
+	local LINKFINDEROUT="$temp.html"
+	debug "run_linkfinder($USERIN)"
+	if isDryRun; then 
+		echo "linkfinder -i $USERIN -d -o $LINKFINDEROUT"
+	else
+		info "Running linkfinder -i $USERIN -d -o $LINKFINDEROUT"
+		linkfinder -i $USERIN -d -o $JS_SCANNING/$LINKFINDEROUT
+	fi
+}
+
+function run_linkfinder_with_file() {
+	local FILEIN="$1"
+	debug "run_linkfinder_with_file($FILE)"
+	if !test -f $FILEIN; then
+		error "Please enter a correct file, you entered an incorrect file:$FILEIN" 254
+	fi
+	while IFS= read -r line 
+	do
+		debug "run_linkfinder_with_file($line)"
+		run_linkfinder $line
+	done < "$FILEIN"
+}
+
 function generate_folders() {
 	# Top level directories
 	SCAN_FOLDER="$OUTPUT_DIR/scans"
@@ -552,6 +581,7 @@ function generate_folders() {
 	HAKTRAILS="$POST_SCAN_ENUM/haktrails"
 	CRAWLING="$POST_SCAN_ENUM/website-crawling"
 	WAYBACKURL="$POST_SCAN_ENUM/waybackurls"
+	JS_SCANNING="$POST_SCAN_ENUM/js-endpoint-discovery"
 	SUBFOLDERS="$ALIVE $DNSCAN $HAKTRAILS $CRAWLING $WAYBACKURL"
 
 
