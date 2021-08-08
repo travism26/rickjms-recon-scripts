@@ -350,13 +350,12 @@ function run_hakrawler() {
 	local HAKRAWLER_FORMS="hakcrawler_forms.out"
 	debug "run_hakrawler($USERIN)"
 	if isDryRun; then
-		echo "cat $USERIN | hakrawler -plain -forms >> $CRAWLING/$HAKRAWLER_FORMS"
-		echo "cat $USERIN | hakrawler -plain -all >> $CRAWLING/$HAKRAWLER_ALL"
+		echo "cat $USERIN | hakrawler >> $CRAWLING/$HAKRAWLER_ALL"
 	else
 		info "Pulling all the forms from target"
-		cat $USERIN | hakrawler -plain -forms >> $CRAWLING/$HAKRAWLER_FORMS
-		info "Crawling target for information"
-		cat $USERIN | hakrawler -plain -all >> $CRAWLING/$HAKRAWLER_ALL
+		cat $USERIN | hakrawler >> $CRAWLING/$HAKRAWLER_ALL
+		# info "Crawling target for information"
+		# cat $USERIN | hakrawler -plain -all >> $CRAWLING/$HAKRAWLER_ALL
 	fi	
 }
 
@@ -515,9 +514,9 @@ function run_sublister() {
 	debug "run_sublister($USERIN)"
 	# python3 ~/tools/recon/Sublist3r/sublist3r.py -d netflix.com
 	if isDryRun; then
-		echo "python3 ~/tools/recon/Sublist3r/sublist3r.py -d $USERIN"
+		echo "sublist3r -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT"
 	else
-		info "Running sublist3r -d $USERIN"
+		info "Running sublist3r -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT"
 		# python3 ~/tools/recon/Sublist3r/
 		sublist3r -d $USERIN -o $SCAN_FOLDER/$SUBLISTEROUT
 		info "cat $SCAN_FOLDER/$SUBLISTEROUT | anew $SCAN_FOLDER/$SUBLIST_OUT"
