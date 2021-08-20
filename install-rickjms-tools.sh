@@ -42,10 +42,12 @@ GO_VERSION="go1.16.5.linux-amd64.tar.gz"
 GO_LINK="https://golang.org/dl/$GO_VERSION"
 
 function install_go(){
+	info "Installing go"
 	wget $GO_LINK
-	echo -e "Uninstalling previous golang installation (if installed) and reinstalling."
+	info "Uninstalling previous golang installation (if installed) and reinstalling."
 	sudo rm -rf /usr/local/go && tar -C /usr/local -xzf $GO_VERSION
 	echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
+	source $BASHRC_FILE
 }
 
 function update_bashrc(){
@@ -69,6 +71,7 @@ function update_bashrc(){
 
 
 function install_go_tools(){
+	info "Install go tools"
 	info "assetfinder"
 	go get -u  github.com/tomnomnom/assetfinder
 	info "httprobe"
@@ -93,7 +96,6 @@ function install_go_tools(){
 
 
 # This is not 100% might need to get reworked!
-CURRENT_PATH=$(pwd)
 function install_git_tools() {
 	GITHUB_DIR="$CURRENT_PATH/github_repos"
 	if [ -d "$GITHUB_DIR" ]; then
@@ -134,6 +136,7 @@ function create_symlink() {
 ##### MAIN METHOD #####
 # install_go
 install_packages
+install_go
 install_go_tools
 setup_python_venv
 install_git_tools
