@@ -33,8 +33,9 @@ function install_packages(){
 	sudo apt-get install -qq git < /dev/null > /dev/null
 	info "rename"
 	sudo apt-get install -qq rename < /dev/null > /dev/null
-	info "xargs"
-	sudo apt-get install -qq xargs < /dev/null > /dev/null
+	# Removing as not in ubuntu repos, is installed by default
+	#info "xargs"
+	#sudo apt-get install -qq xargs < /dev/null > /dev/null
 }
 
 BASHRC_FILE="~/.bashrc"
