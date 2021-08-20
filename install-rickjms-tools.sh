@@ -38,7 +38,7 @@ function install_packages(){
 	#sudo apt-get install -qq xargs < /dev/null > /dev/null
 }
 
-BASHRC_FILE="~/.bashrc"
+BASHRC_FILE=~/.bashrc
 GO_VERSION="go1.16.5.linux-amd64.tar.gz"
 GO_LINK="https://golang.org/dl/$GO_VERSION"
 
