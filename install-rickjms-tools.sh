@@ -10,7 +10,7 @@ function info(){
 
 function install_packages(){
 	# Required for silencing the apt-get output
-	sudo DEBIAN_FRONTEND=noninteractive
+	DEBIAN_FRONTEND=noninteractive
 	info "Installing required apt depedencies"
 	info "openssl-dev"
 	sudo apt-get install -qq libcurl4-openssl-dev < /dev/null > /dev/null
@@ -33,8 +33,8 @@ function install_packages(){
 	sudo apt-get install -qq git < /dev/null > /dev/null
 	info "rename"
 	sudo apt-get install -qq rename < /dev/null > /dev/null
-	#info "xargs"
-	#sudo apt install -y -qq xargs
+	info "xargs"
+	sudo apt-get install -qq xargs < /dev/null > /dev/null
 }
 
 BASHRC_FILE="~/.bashrc"
