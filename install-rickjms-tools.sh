@@ -9,25 +9,24 @@ function info(){
 }
 
 function install_packages(){
-	sudo apt-get install -y libcurl4-openssl-dev
-	sudo apt-get install -y libssl-dev
-	sudo apt-get install -y jq
-	sudo apt-get install -y ruby-full
-	sudo apt-get install -y libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev
-	sudo apt-get install -y build-essential libssl-dev libffi-dev python-dev
-	sudo apt-get install -y python-setuptools
-	sudo apt-get install -y libldns-dev
-	sudo apt-get install -y python3-pip
-	sudo apt-get install -y python-pip
-	sudo apt-get install -y python-dnspython
-	sudo apt-get install -y git
-	sudo apt-get install -y rename
-	sudo apt-get install -y xargs
+	sudo apt install -y libcurl4-openssl-dev
+	sudo apt install -y libssl-dev
+	sudo apt install -y jq
+	sudo apt install -y ruby-full
+	sudo apt install -y libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev
+	sudo apt install -y build-essential libssl-dev libffi-dev python-dev
+	sudo apt install -y libldns-dev
+	sudo apt install -y python3-pip
+	sudo apt install -y python3-venv
+	sudo apt install -y git
+	sudo apt install -y rename
+	sudo apt install -y xargs
 }
 
 BASHRC_FILE="~/.bashrc"
 GO_VERSION="go1.16.5.linux-amd64.tar.gz"
 GO_LINK="https://golang.org/dl/$GO_VERSION"
+
 function install_go(){
 	wget $GO_LINK
 	echo -e "Uninstalling previous golang installation (if installed) and reinstalling."
@@ -91,6 +90,8 @@ function install_git_tools() {
 	fi
 	info "github repos"
 	git clone https://github.com/aboul3la/Sublist3r.git $GITHUB_DIR/sublister
+	pip3 install -r $GITHUB_DIR/sublister/requirements.txt
+
 	git clone https://github.com/tomnomnom/hacks.git $GITHUB_DIR/hacks
 
 	# Install sublister
@@ -104,6 +105,10 @@ function install_git_tools() {
 	sudo ln -s $GITHUB_DIR/hacks/inscope/inscope /bin/inscope
 }
 
+function setup_python_venv() {
+	python3 -m venv rickjms-tools
+	source rickjms-tools/bin/activate
+}
 
 # You need to pass absolute path and no reletive path!
 function create_symlink() {
@@ -116,4 +121,5 @@ function create_symlink() {
 # install_go
 install_packages
 install_go_tools
+setup_python_venv
 install_git_tools
