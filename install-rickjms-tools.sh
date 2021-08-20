@@ -44,7 +44,7 @@ GO_LINK="https://golang.org/dl/$GO_VERSION"
 
 function install_go(){
 	info "Installing go"
-	wget $GO_LINK
+	wget -q $GO_LINK
 	info "Uninstalling previous golang installation (if installed) and reinstalling."
 	sudo rm -rf /usr/local/go && tar -C /usr/local -xzf $GO_VERSION
 	echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
