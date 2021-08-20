@@ -10,7 +10,7 @@ function info(){
 
 function install_packages(){
 	# Required for silencing the apt output
-	DEBIAN_FRONTEND=noninteractive
+	sudo DEBIAN_FRONTEND=noninteractive
 	info "Installing required apt depedencies"
 	info "openssl-dev"
 	sudo apt install -qq libcurl4-openssl-dev < /dev/null > /dev/null
