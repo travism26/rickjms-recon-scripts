@@ -9,18 +9,30 @@ function info(){
 }
 
 function install_packages(){
-	sudo apt install -y libcurl4-openssl-dev
-	sudo apt install -y libssl-dev
-	sudo apt install -y jq
-	sudo apt install -y ruby-full
-	sudo apt install -y libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev
-	sudo apt install -y build-essential libssl-dev libffi-dev python-dev
-	sudo apt install -y libldns-dev
-	sudo apt install -y python3-pip
-	sudo apt install -y python3-venv
-	sudo apt install -y git
-	sudo apt install -y rename
-	sudo apt install -y xargs
+	info "Installing required apt depedencies"
+	info "openssl-dev"
+	sudo apt install -y -qq libcurl4-openssl-dev
+	sudo apt install -y -qq libssl-dev
+	info "jq"
+	sudo apt install -y -qq jq
+	info "ruby"
+	sudo apt install -y -qq ruby-full
+	info "libs"
+	sudo apt install -y -qq libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev
+	info "build"
+	sudo apt install -y -qq build-essential libssl-dev libffi-dev python-dev
+	info "libdns"
+	sudo apt install -y -qq libldns-dev
+	info "python3 pip"
+	sudo apt install -y -qq python3-pip
+	info "python3 venv"
+	sudo apt install -y -qq python3-venv
+	info "git"
+	sudo apt install -y -qq git
+	info "rename"
+	sudo apt install -y -qq rename
+	info "xargs"
+	sudo apt install -y -qq xargs
 }
 
 BASHRC_FILE="~/.bashrc"
