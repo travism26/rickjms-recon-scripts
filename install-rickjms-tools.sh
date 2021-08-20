@@ -9,30 +9,30 @@ function info(){
 }
 
 function install_packages(){
-	# Required for silencing the apt output
+	# Required for silencing the apt-get output
 	sudo DEBIAN_FRONTEND=noninteractive
 	info "Installing required apt depedencies"
 	info "openssl-dev"
-	sudo apt install -qq libcurl4-openssl-dev < /dev/null > /dev/null
-	sudo apt install -qq libssl-dev < /dev/null > /dev/null
+	sudo apt-get install -qq libcurl4-openssl-dev < /dev/null > /dev/null
+	sudo apt-get install -qq libssl-dev < /dev/null > /dev/null
 	info "jq"
-	sudo apt install -qq jq < /dev/null > /dev/null
+	sudo apt-get install -qq jq < /dev/null > /dev/null
 	info "ruby"
-	sudo apt install -qq ruby-full < /dev/null > /dev/null
+	sudo apt-get install -qq ruby-full < /dev/null > /dev/null
 	info "libs"
-	sudo apt install -qq libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev < /dev/null > /dev/null
+	sudo apt-get install -qq libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev < /dev/null > /dev/null
 	info "build"
-	sudo apt install -qq build-essential libssl-dev libffi-dev python-dev < /dev/null > /dev/null
+	sudo apt-get install -qq build-essential libssl-dev libffi-dev python-dev < /dev/null > /dev/null
 	info "libdns"
-	sudo apt install -qq libldns-dev < /dev/null > /dev/null
+	sudo apt-get install -qq libldns-dev < /dev/null > /dev/null
 	info "python3 pip"
-	sudo apt install -qq python3-pip < /dev/null > /dev/null
+	sudo apt-get install -qq python3-pip < /dev/null > /dev/null
 	info "python3 venv"
-	sudo apt install -qq python3-venv < /dev/null > /dev/null
+	sudo apt-get install -qq python3-venv < /dev/null > /dev/null
 	info "git"
-	sudo apt install -qq git < /dev/null > /dev/null
+	sudo apt-get install -qq git < /dev/null > /dev/null
 	info "rename"
-	sudo apt install -qq rename < /dev/null > /dev/null
+	sudo apt-get install -qq rename < /dev/null > /dev/null
 	#info "xargs"
 	#sudo apt install -y -qq xargs
 }
