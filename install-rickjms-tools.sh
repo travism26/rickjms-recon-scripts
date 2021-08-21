@@ -61,6 +61,7 @@ function install_go(){
 	else
 		# export not found
 		echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
+		update_bashrc
 		# Set the export for future functions in this script
 		export PATH=$PATH:/usr/local/go/bin
 	fi
