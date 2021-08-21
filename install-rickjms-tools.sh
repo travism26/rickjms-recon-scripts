@@ -116,9 +116,10 @@ function install_git_tools() {
 		echo "Creating $GITHUB_DIR"
 		mkdir $GITHUB_DIR
 	fi
+	
 	info "sublister"
 	if [ -d $GITHUB_DIR/sublister ]; then
-		git pull $GITHUB_DIR/sublister
+		git fetch $GITHUB_DIR/sublister && git pull $GITHUB_DIR/sublister
 	else
 		git clone https://github.com/aboul3la/Sublist3r.git $GITHUB_DIR/sublister
 	fi
@@ -129,8 +130,8 @@ function install_git_tools() {
 	fi
 
 	info "tomnomnom hacks"
-	if [[ -L $GITHUB_DIR/hacks ]]; then
-		git pull $GITHUB_DIR/hacks
+	if [ -d $GITHUB_DIR/hacks ]; then
+		git fetch $GITHUB_DIR/hacks && git pull $GITHUB_DIR/hacks
 	else
 		git clone https://github.com/tomnomnom/hacks.git $GITHUB_DIR/hacks
 	fi
@@ -144,8 +145,6 @@ function install_git_tools() {
 
 	cd $CURRENT_PATH
 	if [[ ! -L /bin/inscope ]]; then
-		continue
-	else
 		sudo ln -s $GITHUB_DIR/hacks/inscope/inscope /bin/inscope
 	fi
 }
