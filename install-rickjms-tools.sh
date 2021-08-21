@@ -116,9 +116,9 @@ function install_git_tools() {
 	log_h1 "Cloning github repos"
 	GITHUB_DIR="$CURRENT_PATH/github_repos"
 	if [ -d "$GITHUB_DIR" ]; then
-		echo "Not creating github repo dir already exists"
+		log_h2 "Not creating github repo dir already exists"
 	else
-		echo "Creating $GITHUB_DIR"
+		log_h2 "Creating $GITHUB_DIR"
 		mkdir $GITHUB_DIR
 	fi
 	
