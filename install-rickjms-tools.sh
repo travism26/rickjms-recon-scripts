@@ -111,6 +111,8 @@ function install_go_tools(){
 	go install github.com/OJ/gobuster/v3@latest
 	log_message "go dirsearch"
 	go get github.com/evilsocket/dirsearch
+	log_message "go amass"
+	go get -v github.com/OWASP/Amass/v3/...
 }
 
 
