@@ -3,40 +3,40 @@
 
 CURRENT_PATH=$(pwd)
 
-function info(){
+function log_h1(){
 	local msg="$1"
-	echo -e "[+] Installing $msg"
+	echo -e "[+] $msg"
 }
 
-function info(){
+function log_h2(){
 	local msg="$1"
-	echo -e "[+] Installing $msg"
+	echo -e "[-] $msg"
 }
 
 function install_packages(){
 	# Required for silencing the apt-get output
 	DEBIAN_FRONTEND=noninteractive
-	info "required apt depedencies"
-	info "openssl-dev"
+	log_h1 "Installing required apt depedencies"
+	log_h2 "openssl-dev"
 	sudo apt-get install -qq libcurl4-openssl-dev < /dev/null > /dev/null
 	sudo apt-get install -qq libssl-dev < /dev/null > /dev/null
-	info "jq"
+	log_h2 "jq"
 	sudo apt-get install -qq jq < /dev/null > /dev/null
-	info "ruby"
+	log_h2 "ruby"
 	sudo apt-get install -qq ruby-full < /dev/null > /dev/null
-	info "libs"
+	log_h2 "libs"
 	sudo apt-get install -qq libcurl4-openssl-dev libxml2 libxml2-dev libxslt1-dev ruby-dev build-essential libgmp-dev zlib1g-dev < /dev/null > /dev/null
-	info "build"
+	log_h2 "build"
 	sudo apt-get install -qq build-essential libssl-dev libffi-dev python-dev < /dev/null > /dev/null
-	info "libdns"
+	log_h2 "libdns"
 	sudo apt-get install -qq libldns-dev < /dev/null > /dev/null
-	info "python3 pip"
+	log_h2 "python3 pip"
 	sudo apt-get install -qq python3-pip < /dev/null > /dev/null
-	info "python3 venv"
+	log_h2 "python3 venv"
 	sudo apt-get install -qq python3-venv < /dev/null > /dev/null
-	info "git"
+	log_h2 "git"
 	sudo apt-get install -qq git < /dev/null > /dev/null
-	info "rename"
+	log_h2 "rename"
 	sudo apt-get install -qq rename < /dev/null > /dev/null
 	# Removing as not in ubuntu repos, is installed by default
 	#info "xargs"
@@ -48,19 +48,19 @@ GO_VERSION="go1.16.5.linux-amd64.tar.gz"
 GO_LINK="https://golang.org/dl/$GO_VERSION"
 
 function install_go(){
-	info "go"
+	log_h1 "Installing go"
 	wget -q $GO_LINK
-	echo "Uninstalling previous golang installation (if installed) and reinstalling."
+	log_h2 "Uninstalling previous golang installation (if installed) and reinstalling."
 	sudo rm -rf /usr/local/go && tar -C /usr/local -xzf $GO_VERSION
 	sudo rm -f $GO_VERSION
 	# Check if go path has been added
 	if grep -Fxq "export PATH=$PATH:/usr/local/go/bin" $BASHRC_FILE
 	then
 		# export found
-		echo "Go path alredy in bashrc"
+		log_h2 "Go path alredy in bashrc"
 	else
 		# export not found
-		echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
+		log_h2 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
 		# Set the export for future functions in this script
 		export PATH=$PATH:/usr/local/go/bin
 	fi
@@ -87,33 +87,33 @@ function update_bashrc(){
 
 
 function install_go_tools(){
-	info "go tools"
-	info "assetfinder"
+	log_h1 "Installing go tools"
+	log_h2 "assetfinder"
 	go get -u  github.com/tomnomnom/assetfinder
-	info "httprobe"
+	log_h2 "httprobe"
 	go get -u github.com/tomnomnom/httprobe
-	info "subfinder"
+	log_h2 "subfinder"
 	GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder
-	info "hakrawler"
+	log_h2 "hakrawler"
 	go get github.com/hakluke/hakrawler
-	info "waybackurls"
+	log_h2 "waybackurls"
 	go get github.com/tomnomnom/waybackurls
-	info "subjack"
+	log_h2 "subjack"
 	go get github.com/haccer/subjack
-	info "fff"
+	log_h2 "fff"
 	go get -u github.com/tomnomnom/fff
-	info "anew"
+	log_h2 "anew"
 	go get -u github.com/tomnomnom/anew
-	info "gobuster"
+	log_h2 "gobuster"
 	go install github.com/OJ/gobuster/v3@latest
-	info "go dirsearch"
+	log_h2 "go dirsearch"
 	go get github.com/evilsocket/dirsearch
 }
 
 
 # This is not 100% might need to get reworked!
 function install_git_tools() {
-	info "github repos"
+	log_h1 "Cloning github repos"
 	GITHUB_DIR="$CURRENT_PATH/github_repos"
 	if [ -d "$GITHUB_DIR" ]; then
 		echo "Not creating github repo dir already exists"
@@ -122,7 +122,7 @@ function install_git_tools() {
 		mkdir $GITHUB_DIR
 	fi
 	
-	info "sublister"
+	log_h2 "sublister"
 	if [ -d $GITHUB_DIR/sublister ]; then
 		git pull $GITHUB_DIR/sublister --allow-unrelated-histories
 	else
@@ -134,7 +134,7 @@ function install_git_tools() {
 		sudo ln -s $GITHUB_DIR/sublister/sublist3r.py /bin/sublist3r
 	fi
 
-	info "tomnomnom hacks"
+	log_h2 "tomnomnom hacks"
 	if [ -d $GITHUB_DIR/hacks ]; then
 		git pull $GITHUB_DIR/hacks --allow-unrelated-histories
 	else
@@ -142,7 +142,7 @@ function install_git_tools() {
 	fi
 
 	# Install inscope
-	info "inscope"
+	log_h1 "Installing inscope"
 	cd $GITHUB_DIR/hacks/inscope
 	go mod init inscope
 	go mod tidy
