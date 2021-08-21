@@ -124,14 +124,12 @@ function install_git_tools() {
 	fi
 	pip3 install -rq $GITHUB_DIR/sublister/requirements.txt
 	# Install sublister
-	if [ -L /bin/sublist3r ]; then
-		continue
-	else
+	if [[ ! -L /bin/sublist3r ]]; then
 		sudo ln -s $GITHUB_DIR/sublister/sublist3r.py /bin/sublist3r
 	fi
 
 	info "tomnomnom hacks"
-	if [ -d $GITHUB_DIR/hacks ]; then
+	if [[ -L $GITHUB_DIR/hacks ]]; then
 		git pull $GITHUB_DIR/hacks
 	else
 		git clone https://github.com/tomnomnom/hacks.git $GITHUB_DIR/hacks
@@ -145,7 +143,7 @@ function install_git_tools() {
 	go build
 
 	cd $CURRENT_PATH
-	if [ -L /bin/inscope ]; then
+	if [[ ! -L /bin/inscope ]]; then
 		continue
 	else
 		sudo ln -s $GITHUB_DIR/hacks/inscope/inscope /bin/inscope
