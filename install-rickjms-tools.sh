@@ -47,6 +47,7 @@ function install_go(){
 	wget -q $GO_LINK
 	echo "Uninstalling previous golang installation (if installed) and reinstalling."
 	sudo rm -rf /usr/local/go && tar -C /usr/local -xzf $GO_VERSION
+	sudo rm -f $GO_VERSION
 	# Check if go path has been added
 	if grep -Fxq "export PATH=$PATH:/usr/local/go/bin" $BASHRC_FILE
 	then
