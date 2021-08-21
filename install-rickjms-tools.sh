@@ -11,7 +11,7 @@ function info(){
 function install_packages(){
 	# Required for silencing the apt-get output
 	DEBIAN_FRONTEND=noninteractive
-	info "Installing required apt depedencies"
+	info "required apt depedencies"
 	info "openssl-dev"
 	sudo apt-get install -qq libcurl4-openssl-dev < /dev/null > /dev/null
 	sudo apt-get install -qq libssl-dev < /dev/null > /dev/null
@@ -43,9 +43,9 @@ GO_VERSION="go1.16.5.linux-amd64.tar.gz"
 GO_LINK="https://golang.org/dl/$GO_VERSION"
 
 function install_go(){
-	info "Installing go"
+	info "go"
 	wget -q $GO_LINK
-	info "Uninstalling previous golang installation (if installed) and reinstalling."
+	echo "Uninstalling previous golang installation (if installed) and reinstalling."
 	sudo rm -rf /usr/local/go && tar -C /usr/local -xzf $GO_VERSION
 	echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
 	source $BASHRC_FILE
@@ -72,7 +72,7 @@ function update_bashrc(){
 
 
 function install_go_tools(){
-	info "Install go tools"
+	info "go tools"
 	info "assetfinder"
 	go get -u  github.com/tomnomnom/assetfinder
 	info "httprobe"
