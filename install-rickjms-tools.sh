@@ -107,6 +107,7 @@ function install_go_tools(){
 
 # This is not 100% might need to get reworked!
 function install_git_tools() {
+	info "github repos"
 	GITHUB_DIR="$CURRENT_PATH/github_repos"
 	if [ -d "$GITHUB_DIR" ]; then
 		"Not creating github repo dir already exists"
@@ -114,7 +115,6 @@ function install_git_tools() {
 		echo "Creating $GITHUB_DIR"
 		mkdir $GITHUB_DIR
 	fi
-	info "github repos"
 	info "sublister"
 	if [ -d $GITHUB_DIR/sublister ]; then
 		git pull $GITHUB_DIR/sublister
@@ -135,6 +135,7 @@ function install_git_tools() {
 	fi
 
 	# Install inscope
+	info "inscope"
 	cd $GITHUB_DIR/hacks/inscope
 	go mod init inscope
 	go mod tidy
