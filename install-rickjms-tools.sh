@@ -123,7 +123,7 @@ function install_git_tools() {
 	fi
 	pip3 install -rq $GITHUB_DIR/sublister/requirements.txt
 	# Install sublister
-	if [ -L /bin/sublist3r ]; then
+	if [ ! -L /bin/sublist3r ]; then
 		sudo ln -s $GITHUB_DIR/sublister/sublist3r.py /bin/sublist3r
 	fi
 
@@ -142,7 +142,7 @@ function install_git_tools() {
 	go build
 
 	cd $CURRENT_PATH
-	if [ -L /bin/inscope ]; then
+	if [ ! -L /bin/inscope ]; then
 		sudo ln -s $GITHUB_DIR/hacks/inscope/inscope /bin/inscope
 	fi
 }
