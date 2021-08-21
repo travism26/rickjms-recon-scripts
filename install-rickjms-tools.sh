@@ -115,18 +115,29 @@ function install_git_tools() {
 		mkdir $GITHUB_DIR
 	fi
 	info "github repos"
-	git clone https://github.com/aboul3la/Sublist3r.git $GITHUB_DIR/sublister
+	info "sublister"
+	if [ -d $GITHUB_DIR/sublister ]; then
+		git pull $GITHUB_DIR/sublister
+	else
+		git clone https://github.com/aboul3la/Sublist3r.git $GITHUB_DIR/sublister
+	fi
 	pip3 install -r $GITHUB_DIR/sublister/requirements.txt
-
-	git clone https://github.com/tomnomnom/hacks.git $GITHUB_DIR/hacks
-
 	# Install sublister
 	sudo ln -s $GITHUB_DIR/sublister/sublist3r.py /bin/sublist3r
+
+	info "tomnomnom hacks"
+	if [ -d $GITHUB_DIR/hacks ]; then
+		git pull $GITHUB_DIR/hacks
+	else
+		git clone https://github.com/tomnomnom/hacks.git $GITHUB_DIR/hacks
+	fi
+
 	# Install inscope
 	cd $GITHUB_DIR/hacks/inscope
 	go mod init inscope
 	go mod tidy
 	go build
+
 	cd $CURRENT_PATH
 	sudo ln -s $GITHUB_DIR/hacks/inscope/inscope /bin/inscope
 }
