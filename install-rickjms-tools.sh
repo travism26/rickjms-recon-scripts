@@ -51,6 +51,7 @@ function install_go(){
 	if grep -Fxq "export PATH=$PATH:/usr/local/go/bin" $BASHRC_FILE
 	then
 		# export found
+		echo "Go path alredy in bashrc"
 	else
 		# export not found
 		echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
