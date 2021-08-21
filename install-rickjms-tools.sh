@@ -112,7 +112,7 @@ function install_go_tools(){
 	log_message "go dirsearch"
 	go get github.com/evilsocket/dirsearch
 	log_message "go amass"
-	go get -v github.com/OWASP/Amass/v3/...
+	go get github.com/OWASP/Amass/v3/...
 }
 
 
