@@ -61,31 +61,33 @@ function install_go(){
 	else
 		# export not found
 		echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
-		update_bashrc
 		# Set the export for future functions in this script
 		export PATH=$PATH:/usr/local/go/bin
 	fi
+	
+	if grep -Fxq "export GOPATH=$HOME/go" $BASHRC_FILE
+	then
+		# export found
+		log_message "Go home alredy in bashrc"
+	else
+		# export not found
+		echo 'export GOPATH=$HOME/go' >> $BASHRC_FILE 
+		# Set the export for future functions in this script
+		export GOPATH=$HOME/go
+	fi
+	
+	if grep -Fxq "export PATH=$PATH:$GOPATH/bin" $BASHRC_FILE
+	then
+		# export found
+		log_message "Go bin path alredy in bashrc"
+	else
+		# export not found
+		echo 'export PATH=$PATH:$GOPATH/bin' >> $BASHRC_FILE 
+		# Set the export for future functions in this script
+		export PATH=$PATH:$GOPATH/bin
+	fi
+
 }
-
-function update_bashrc(){
-	##### THIS IS FOR GOLANG SETUP #####
-	# https://github.com/tomnomnom/hacks.git
-	# Setting gopath to allow external packages to be used
-	# Ie: go get -u github.com/tomnomnom/assetfinder
-	echo '##### SETTING UP GO PATH #####' >> $BASHRC_FILE
-	echo 'export GOPATH=$HOME/go' >> $BASHRC_FILE 
-	echo 'export PATH=$PATH:$GOPATH/bin' >> $BASHRC_FILE
-}
-
-
-# export GOROOT=/usr/local/go
-# export GOPATH=$HOME/go
-# export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-# echo 'export GOROOT=/usr/local/go' >> ~/.bash_profile
-# echo 'export GOPATH=$HOME/go'   >> ~/.bash_profile
-# echo 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' >> ~/.bash_profile
-# source ~/.bash_profile
-
 
 function install_go_tools(){
 	log_title "Installing go tools"
