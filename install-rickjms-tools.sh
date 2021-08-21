@@ -8,6 +8,11 @@ function info(){
 	echo -e "[+] Installing $msg"
 }
 
+function info(){
+	local msg="$1"
+	echo -e "[+] Installing $msg"
+}
+
 function install_packages(){
 	# Required for silencing the apt-get output
 	DEBIAN_FRONTEND=noninteractive
@@ -119,7 +124,7 @@ function install_git_tools() {
 	
 	info "sublister"
 	if [ -d $GITHUB_DIR/sublister ]; then
-		git fetch $GITHUB_DIR/sublister && git pull $GITHUB_DIR/sublister
+		git pull $GITHUB_DIR/sublister --allow-unrelated-histories
 	else
 		git clone https://github.com/aboul3la/Sublist3r.git $GITHUB_DIR/sublister
 	fi
@@ -131,7 +136,7 @@ function install_git_tools() {
 
 	info "tomnomnom hacks"
 	if [ -d $GITHUB_DIR/hacks ]; then
-		git fetch $GITHUB_DIR/hacks && git pull $GITHUB_DIR/hacks
+		git pull $GITHUB_DIR/hacks --allow-unrelated-histories
 	else
 		git clone https://github.com/tomnomnom/hacks.git $GITHUB_DIR/hacks
 	fi
