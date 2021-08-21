@@ -111,7 +111,7 @@ function install_git_tools() {
 	info "github repos"
 	GITHUB_DIR="$CURRENT_PATH/github_repos"
 	if [ -d "$GITHUB_DIR" ]; then
-		"Not creating github repo dir already exists"
+		echo "Not creating github repo dir already exists"
 	else
 		echo "Creating $GITHUB_DIR"
 		mkdir $GITHUB_DIR
@@ -124,7 +124,9 @@ function install_git_tools() {
 	fi
 	pip3 install -rq $GITHUB_DIR/sublister/requirements.txt
 	# Install sublister
-	if [ ! -L /bin/sublist3r ]; then
+	if [ -L /bin/sublist3r ]; then
+		continue
+	else
 		sudo ln -s $GITHUB_DIR/sublister/sublist3r.py /bin/sublist3r
 	fi
 
@@ -143,7 +145,9 @@ function install_git_tools() {
 	go build
 
 	cd $CURRENT_PATH
-	if [ ! -L /bin/inscope ]; then
+	if [ -L /bin/inscope ]; then
+		continue
+	else
 		sudo ln -s $GITHUB_DIR/hacks/inscope/inscope /bin/inscope
 	fi
 }
