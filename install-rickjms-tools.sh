@@ -10,7 +10,7 @@ function log_h1(){
 
 function log_h2(){
 	local msg="$1"
-	echo -e "[-] $msg"
+	echo -e "  - $msg"
 }
 
 function install_packages(){
