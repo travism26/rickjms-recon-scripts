@@ -60,7 +60,7 @@ function install_go(){
 		log_message "Go path alredy in bashrc"
 	else
 		# export not found
-		log_message 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
+		echo 'export PATH=$PATH:/usr/local/go/bin' >> $BASHRC_FILE
 		# Set the export for future functions in this script
 		export PATH=$PATH:/usr/local/go/bin
 	fi
