@@ -123,8 +123,8 @@ function install_git_tools() {
 }
 
 function setup_python_venv() {
-	python3 -m venv rickjms-tools
-	source rickjms-tools/bin/activate
+	python3 -m venv $CURRENT_PATH
+	source $CURRENT_PATH/bin/activate
 }
 
 # You need to pass absolute path and no reletive path!
