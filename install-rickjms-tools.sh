@@ -121,7 +121,7 @@ function install_git_tools() {
 	else
 		git clone https://github.com/aboul3la/Sublist3r.git $GITHUB_DIR/sublister
 	fi
-	pip3 install -r $GITHUB_DIR/sublister/requirements.txt
+	pip3 install -rq $GITHUB_DIR/sublister/requirements.txt
 	# Install sublister
 	if [ ! -d /bin/sublist3r ]; then
 		sudo ln -s $GITHUB_DIR/sublister/sublist3r.py /bin/sublist3r
