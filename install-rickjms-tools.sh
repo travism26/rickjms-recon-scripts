@@ -5,12 +5,12 @@ CURRENT_PATH=$(pwd)
 
 function log_h1(){
 	local msg="$1"
-	echo -e "\e[0;34m [+] $msg"
+	echo -e "\e[0;34m [+] $msg \e[0m"
 }
 
 function log_h2(){
 	local msg="$1"
-	echo -e "\e[0;35m  - $msg"
+	echo -e "\e[0;35m  - $msg \e[0m"
 }
 
 function install_packages(){
