@@ -86,6 +86,7 @@ function install_go(){
 		# Set the export for future functions in this script
 		export PATH=$PATH:$GOPATH/bin
 	fi
+	exec bash
 
 }
 
