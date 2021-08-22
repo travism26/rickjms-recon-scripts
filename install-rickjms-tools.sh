@@ -86,8 +86,6 @@ function install_go(){
 		# Set the export for future functions in this script
 		export PATH=$PATH:$GOPATH/bin
 	fi
-	exec bash
-
 }
 
 function install_go_tools(){
@@ -173,9 +171,10 @@ function create_symlink() {
 }
 
 ##### MAIN METHOD #####
-# install_go
 install_packages
 install_go
 install_go_tools
 setup_python_venv
 install_git_tools
+# Restart bash shell to set up go paths
+exec bash
