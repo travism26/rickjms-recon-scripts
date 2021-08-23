@@ -805,7 +805,12 @@ function run_scanners() {
 	echo "sudo dnmasscan $ALL_HOST_DATA $DNSCAN/dnmasscan.out -p$PORTS_TO_SCAN -oG $DNSCAN/masscan.out"
 } 
 
+function activate_python_venv() {
+	source $BASEDIR/bin/activate
+}
+
 ## MAIN METHOD ##
+activate_python_venv
 userInput $@
 init
 run_scanners
