@@ -112,3 +112,69 @@ Majority of the tools are built in golang so a simple `go get ...` will work. Ot
 ## Create symlink
 - Example on how to create a symlink for sublist3r.
 `sudo ln -s ~/path/to/Sublist3r/sublist3r.py /bin/sublist3`
+
+# My personal recon approach
+- I am going to try and put down a good "Recon" workflow this will be from subdomain enumeration -> content discovery.
+- Credit: https://m0chan.github.io/2019/12/17/Bug-Bounty-Cheetsheet.html
+
+## Steps
+1. Identify IPS and main top level domains (TLDS)
+2. Subdomain Enumeration (This tool)
+3. Domain Bruteforcing
+4. Port Scanning, web-application port scanning (httprobe)
+5. Run a screenshotting tool (aquatone, eyewitness)
+6. Content Discovery
+
+### Identifiy IPs and TLDS
+- ASNs
+	- https://bgp.he.net/
+- Reverse whois
+	- https://www.whoxy.com/
+- Acquistions
+	- https://www.crunchbase.com/home
+- Google-fu
+	- Use google to find shit few examples.
+		- `url: tesla.com intitle:admin`
+		- `url: tesla.com inurl:'src-img'`
+
+### Subdomain Enum (This script will cover this mostly minus amass)
+- rickjms-recon.sh
+- amass <-- This tools is OVER POWERED, run this with as much info as possible and you wont be disappointed. (all api keys + using asn values)
+	- Example:`amass enum -o amass/amass.enum-2.out -src -ip -df targets.txt -brute -config ~/.config/amass/config.ini -active -rf ~/resolvers/july30.21.txt -cidr x.x.x.x/x -asn ####,###`
+- subfinder (included in rickjms-recon.sh)
+
+#### Only have CIDR? hakrevdns is your answer
+- https://github.com/hakluke/hakrevdns
+```bash
+prips xx.xx.xx.xx/xx | hakrevdns
+...
+```
+
+### (sub)Domain Bruteforcing
+- Generate permutations with dnsgen
+`cat domains.txt | dnsgen - | massdns -r /path/to/resolvers.txt -t A -o J -w dnsgenoutput.txt --flush 2>/dev/null`
+- `dnsrecon -d apple.com -D all.txt -t brt`
+	- all.txt -> jhaddix yuge bruteforce list, see below.
+- `python $Tools/subbrute/subbrute.py paypal.com paypal.co.uk -t all.txt`
+- `gobuster dns -d apple.com -w all.txt`
+
+#### Tools required
+- https://github.com/blechschmidt/massdns
+```bash 
+git clone https://github.com/blechschmidt/massdns.git
+cd massdns
+make
+cd bin
+sudo ln -s PATH/TO/massdns/bin/massdns /bin/massdns
+```
+- https://github.com/ProjectAnte/dnsgen
+```bash
+git clone https://github.com/ProjectAnte/dnsgen
+cd dnsgen
+pip3 install -r requirements.txt
+python3 setup.py install
+```
+- https://gist.github.com/jhaddix/86a06c5dc309d08580a018c66354a056
+
+- https://github.com/TheRook/subbrute
+- https://github.com/OJ/gobuster.git

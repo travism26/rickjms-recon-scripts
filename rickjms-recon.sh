@@ -781,6 +781,8 @@ function run_scanners() {
 	run_subjack $ALIVE_HOSTS
 	run_nmap $ALIVE_HOSTS
 	run_fff $PROBOUTPUT
+	info "RUNNING NEW FEATURES MIGHT BREAK!"
+	run_linkfinder_with_file $PROBOUTPUT
 
 	# FILES WE ARE DEALING WITH:
 	# scans/assetfinder.out :: TOOLS: dnmasscan, httprobe, 
