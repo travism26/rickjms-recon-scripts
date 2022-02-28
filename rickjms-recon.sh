@@ -808,7 +808,9 @@ function run_scanners() {
 } 
 
 function activate_python_venv() {
-	source $BASEDIR/bin/activate
+	if [[ -f $BASEDIR/bin/activate ]]; then
+		source $BASEDIR/bin/activate
+	fi
 }
 
 ## MAIN METHOD ##
