@@ -8,7 +8,7 @@ CUR_DATE=$(date +"%Y%m%d")
 UUIDSHORT=$(uuidgen | cut -d\- -f1)
 CURRENT_DIR=$(pwd)
 BASEDIR=$(dirname $0)
-SILENT_MODE=""
+SILENT_MODE="false"
 
 # Default output script logging to current directory / scriptname.log
 LOGFILE="$CURRENT_DIR/$SCRIPT.log"
@@ -106,7 +106,7 @@ function log() {
 }
 
 function info() {
-  if test -z $SILENT_MODE; then
+  if enableLogging; then
       echo "[$SCRIPT] [INFO] $@"
   fi
   # Save to log file
@@ -136,13 +136,6 @@ function userInput() {
           Usage
           exit 255
           ;;
-        f)
-          USER_FILE="$OPTARG" # Note you need to use $OPTARG for this to work.
-          FILE_PASSED="true"  # I use this as a helper to easily check if file is passed in.
-          ;;
-        n)
-          USER_FLAG="true"
-          ;;
         s)
           SILENT_MODE="true" # Turns off logging to the terminal
           ;;
@@ -158,9 +151,7 @@ function userInput() {
 function Usage() {
   echo "Usage:"
   echo -e "\t-h \t\t\t\tDisplay help menu"
-  echo -e "\t-f FILENAME \t\tUser passes in a file!"
-  echo -e "\t-n \t\t\tUser passes in just a flag"
-  echo -e "\t-s \t\t\tSilent Mode do not post output"
+  echo -e "\t-s \t\t\tEnable logging to screen (STDout)"
 }
 
 function init() {
@@ -178,6 +169,9 @@ function filePassed() {
   [ "$FILE_PASSED" = "true" ]
 }
 
+function enableLogging() {
+  [ "$SILENT_MODE" = "true" ]
+}
 ##### Script Functions #####
 
 
@@ -189,7 +183,21 @@ function fetchGitRepo() {
   local GIT_REPOSITORY="$1"
   local SAVE_LOCATION="$2"
   info "git clone $GIT_REPOSITORY $SAVE_LOCATION"
-  # git clone $GIT_REPOSITORY $SAVE_LOCATION
+  git clone $GIT_REPOSITORY $SAVE_LOCATION
+}
+
+function updateGitRepo() {
+  # Lets say the lists are already installed instead lets update them
+  # git pull origin main / master
+  local REPO_LOCATION="$1"
+  info "Change to repo location:$REPO_LOCATION"
+  cd $REPO_LOCATION
+  
+  info "pulling updates from github check for master if fail pull from main"
+  git pull origin master || git pull origin main
+  info "Change back to top Directory: $CURRENT_DIR"
+  cd $CURRENT_DIR
+  info "Finished updating git repositories..."
 }
 
 # Abstracted function to wrap all common calls
@@ -197,11 +205,8 @@ function checkAndDownloadRepo() {
   local INSTALL_LOCATION="$1"
   local REPO="$2"
   if test -d "$INSTALL_LOCATION"; then
-    info "Directory Exists: $INSTALL_LOCATION"
-    info "Run update instead..."
-    # update_git_repo
+    updateGitRepo "$INSTALL_LOCATION"
   else
-    info "Repo not found downloading..."
     fetchGitRepo "$REPO" "$INSTALL_LOCATION"
   fi
 }
@@ -313,11 +318,7 @@ function downloadrepos() {
   local userLocation="$1"
   ## All the functions that collect the git repos
   local INSTALL_LOCATION="$HOME/rickjms/github-tools"
-  if test -d $INSTALL_LOCATION; then
-    # Folder exists no need to mkdir -p $INSTALL_LOCATION
-    info "Tools Directory Exists continue..."
-  else
-    info "Missing Directory: '$INSTALL_LOCATION' create structure now..."
+  if !test -d $INSTALL_LOCATION; then
     mkdir -p $INSTALL_LOCATION
   fi
   get_js "$INSTALL_LOCATION"
@@ -330,7 +331,7 @@ function downloadrepos() {
   get_fuzzer "$INSTALL_LOCATION"
   get_subdomain "$INSTALL_LOCATION"
   get_web_attacks "$INSTALL_LOCATION"
-  echo "Complete"
+  echo "Complete Saved all tools:$HOME/rickjms/github-tools/"
 }
 
 ##### MAIN FUNCTION #####
