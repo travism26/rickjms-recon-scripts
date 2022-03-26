@@ -23,6 +23,18 @@ LIGHT_SCAN=""
 INSCOPE_PASSED=""
 SKIPWAYBACK=""
 
+###### Top bug bounty hunters favorite tools / commands ######
+#
+# Naffy loves this nmap command need to find a place to put it...
+# - He run nmap on hosts
+# nmap -T 4 -iL hosts -Pn --script=http-title -p80,4443,4080,443 --open
+# run nmap scan on ports: 80, 443, 4443, 4080
+# crt.sh, censys, shodan
+# 	-> Look for new hosts
+# 	-> 
+# curl -i HOSTNAME
+######
+
 
 ###### PHASE ONE RECON ######
 # Recon output This will hold all my amass, haktrails, assetfinder stuff...
@@ -576,7 +588,7 @@ function generate_folders() {
 	TOPFOLDERS="$SCAN_FOLDER $POST_SCAN_ENUM $POSSIBLE_OOS_TARGETS"
 
 	# Sub directories POST SCANNING? / subdomain enum
-	ALIVE="$POST_SCAN_ENUM/alive-urls"
+	ALIVE="$POST_SCAN_ENUM/subdomains"
 	DNSCAN="$POST_SCAN_ENUM/dnmasscan"
 	HAKTRAILS="$POST_SCAN_ENUM/haktrails"
 	CRAWLING="$POST_SCAN_ENUM/website-crawling"
