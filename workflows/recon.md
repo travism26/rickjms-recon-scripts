@@ -24,6 +24,27 @@ shodan search "hostname:ibm.com \!port:8080" # exclude port 8080
 shodan search "hostname:ibm.com \!port:443,21,8080" # exclude common ports
 shodan search "hostname:ibm.com product:nginx" # search for nginx
 shodan search "hostname:ibm.com product:tomcat" # search for tomcat
+shodan search "hostname:ibm.com product:jboss" # search for jboss
+shodan search "hostname:ibm.com product:weblogic" # search for weblogic
+shodan search "hostname:ibm.com product:websphere" # search for websphere
+# Extract a field
+shodan search "hostname:ibm.com product:nginx" --fields ip_str,isp,location,org,os,product,timestamp
+```
+
+## Httpx
+
+### Examples still need to decide on the best way to do this
+
+```bash
+# nahamsec command?
+httpx -l paypal-subdomains.txt -cl -sc -location -favicon -title -ip -tech-detect -ports 80,443,8080,8443,8000 -probe-all-ips -o paypal-httpx.txt -follow-redirects
+httpx -l subdomains.txt -o httpx.txt
+httpx -l subdomains.txt -o httpx.txt -status-code
+httpx -l subdomains.txt -o httpx.txt -title
+httpx -l subdomains.txt -o httpx.txt -status-code -title
+httpx -l subdomains.txt -o httpx.txt -status-code -title -ip
+httpx -l subdomains.txt -o httpx.txt -status-code -title -ip -content-length
+
 ```
 
 ### Nmap Scan
