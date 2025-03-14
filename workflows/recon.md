@@ -12,10 +12,18 @@ cat subdomains.txt | rev | cut -d "." -f 1,2 | rev | sort -u > unique_subdomains
 subfinder -dL unique_subdomains.txt -silent -all >> subdomains.txt
 ```
 
-## Shodan Scan
+## Shodan
+
+Some examples of how to use shodan to find interesting things.
+
+### Examples still need to decide on the best way to do this
 
 ```bash
-shodan search --csv $1 > shodan.csv
+shodan search "hostname:ibm.com port:8080" # search for port 8080
+shodan search "hostname:ibm.com \!port:8080" # exclude port 8080
+shodan search "hostname:ibm.com \!port:443,21,8080" # exclude common ports
+shodan search "hostname:ibm.com product:nginx" # search for nginx
+shodan search "hostname:ibm.com product:tomcat" # search for tomcat
 ```
 
 ### Nmap Scan
