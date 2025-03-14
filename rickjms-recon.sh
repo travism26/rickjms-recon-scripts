@@ -10,9 +10,14 @@ source "$(dirname "${BASH_SOURCE[0]}")/src/core/utils.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/crtsh.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/tls_bufferover.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/wayback.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/google_dorks.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/asn_enum.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/nmap.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/http_probe.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/crawler.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/dir_enum.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/param_discovery.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/vuln_scan.sh"
 
 # Import reporting module
 source "$(dirname "${BASH_SOURCE[0]}")/src/reporting/report_generator.sh"
@@ -56,6 +61,12 @@ run_scans() {
         if ! skipWaybackUrl; then
             run_waybackurls "$TARGET_LIST"
         fi
+        
+        # Google Dorking
+        run_google_dorks "$TARGET_LIST"
+        
+        # ASN Enumeration
+        run_asn_enum "$TARGET_LIST"
     else
         info "Light scan mode enabled - skipping intensive passive recon"
     fi
@@ -74,10 +85,29 @@ run_scans() {
     if ! isLightScan; then
         run_hakrawler "$TARGET_LIST"
         run_subdomainizer "$TARGET_LIST"
+        
+        # Directory Enumeration
+        run_dir_enum "$TARGET_LIST"
+        
+        # Parameter Discovery
+        run_param_discovery "$TARGET_LIST"
+        
+        # Vulnerability Scanning
+        run_vuln_scan "$TARGET_LIST"
     fi
     
-    # Generate Report
+    # Generate Reports
+    info "Generating reports"
     generate_report "$OUTPUT_DIR"
+    
+    # Generate additional reports
+    if ! isLightScan; then
+        generate_google_dork_report "$OUTPUT_DIR"
+        generate_asn_report "$OUTPUT_DIR"
+        generate_dir_enum_report "$OUTPUT_DIR"
+        generate_param_discovery_report "$OUTPUT_DIR"
+        generate_vuln_report "$OUTPUT_DIR"
+    fi
     
     # Show execution time
     local end_time=$(date +%s)

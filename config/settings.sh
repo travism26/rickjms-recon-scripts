@@ -21,6 +21,11 @@ REQUIRED_TOOLS=(
     "nmap"
     "fff"
     "linkfinder"
+    "ffuf"
+    "arjun"
+    "nuclei"
+    "masscan"
+    "jq"
 )
 
 # Global paths and directories

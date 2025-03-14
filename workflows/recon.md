@@ -47,6 +47,41 @@ httpx -l subdomains.txt -o httpx.txt -status-code -title -ip -content-length
 
 ```
 
+## massdns
+
+This tool is useful for resolving subdomains to IP addresses, and is faster than `dig` or `nslookup`.
+
+### Examples still need to decide on the best way to do this
+
+```bash
+massdns -r resolvers.txt -t A spotify-subdomains.txt -o S > spotify-massdns.txt
+massdns -r resolvers.txt -t A spotify-subdomains.txt -o J > spotify-massdns.json
+```
+
+## dns bruteforce
+
+This tool is useful for bruteforcing subdomains.
+
+### Examples still need to decide on the best way to do this
+
+-w wordlist
+-r resolvers
+-mode bruteforce
+-m massdns (or other dns resolver)
+-o output
+
+```bash
+shuffledns -d paypal.com -w subdomains.txt -r resolvers.txt -mode bruteforce -m massdns -o paypal-subdomains.txt
+```
+
+## Masscan
+
+### Examples still need to decide on the best way to do this
+
+```bash
+masscan -iL subdomains.txt --rate 1000000 -p 80,443,8080,8443,8000 --output-format json --output-file masscan.json
+```
+
 ### Nmap Scan
 
 ```bash
