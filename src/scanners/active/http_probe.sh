@@ -1,9 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Get the script directory
+SCRIPT_DIR="$(cd "$(dirname "$(dirname "$(dirname "$(dirname "${BASH_SOURCE[0]}")")")")" && pwd)"
 
 # Import required modules
-source "$(dirname "${BASH_SOURCE[0]}")/../../core/logging.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../core/utils.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../config/settings.sh"
+source "$SCRIPT_DIR/src/core/logging.sh"
+source "$SCRIPT_DIR/src/core/utils.sh"
+source "$SCRIPT_DIR/config/settings.sh"
 
 # Run httpx probe
 run_httpx() {

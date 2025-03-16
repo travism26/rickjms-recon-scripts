@@ -1,9 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Get the script directory
+SCRIPT_DIR="$(cd "$(dirname "$(dirname "$(dirname "$(dirname "${BASH_SOURCE[0]}")")")")" && pwd)"
 
 # Import required modules
-source "$(dirname "${BASH_SOURCE[0]}")/../../core/logging.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../core/utils.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../config/settings.sh"
+source "$SCRIPT_DIR/src/core/logging.sh"
+source "$SCRIPT_DIR/src/core/utils.sh"
+source "$SCRIPT_DIR/config/settings.sh"
 
 # Main Nmap scanning function
 run_nmap() {
@@ -149,8 +152,8 @@ validate_nmap_installation() {
     if ! command -v nmap &>/dev/null; then
         error "nmap is not installed" 1
         return 1
-    }
-    
+    fi
+
     # Check if we have permission to run TCP SYN scans
     if ! nmap --privileged --version &>/dev/null; then
         warn "nmap is not running with sufficient privileges for SYN scans"

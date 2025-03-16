@@ -1,26 +1,29 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Set the base directory for the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Import configuration and core modules
-source "$(dirname "${BASH_SOURCE[0]}")/config/settings.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/core/logging.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/core/validation.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/core/utils.sh"
+source "$SCRIPT_DIR/config/settings.sh"
+source "$SCRIPT_DIR/src/core/logging.sh"
+source "$SCRIPT_DIR/src/core/validation.sh"
+source "$SCRIPT_DIR/src/core/utils.sh"
 
 # Import scanner modules
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/crtsh.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/tls_bufferover.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/wayback.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/google_dorks.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/asn_enum.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/nmap.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/http_probe.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/crawler.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/dir_enum.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/param_discovery.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/vuln_scan.sh"
+source "$SCRIPT_DIR/src/scanners/passive/crtsh.sh"
+source "$SCRIPT_DIR/src/scanners/passive/tls_bufferover.sh"
+source "$SCRIPT_DIR/src/scanners/passive/wayback.sh"
+source "$SCRIPT_DIR/src/scanners/passive/google_dorks.sh"
+source "$SCRIPT_DIR/src/scanners/passive/asn_enum.sh"
+source "$SCRIPT_DIR/src/scanners/active/nmap.sh"
+source "$SCRIPT_DIR/src/scanners/active/http_probe.sh"
+source "$SCRIPT_DIR/src/scanners/active/crawler.sh"
+source "$SCRIPT_DIR/src/scanners/active/dir_enum.sh"
+source "$SCRIPT_DIR/src/scanners/active/param_discovery.sh"
+source "$SCRIPT_DIR/src/scanners/active/vuln_scan.sh"
 
 # Import reporting module
-source "$(dirname "${BASH_SOURCE[0]}")/src/reporting/report_generator.sh"
+source "$SCRIPT_DIR/src/reporting/report_generator.sh"
 
 # Consolidate targets from file or single target
 consolidateTargets() {

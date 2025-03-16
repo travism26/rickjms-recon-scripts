@@ -81,6 +81,7 @@ go install github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
 # Additional useful tools
 go install github.com/lc/gau/v2/cmd/gau@latest
 go install github.com/d3mondev/puredns/v2@latest
+go install github.com/tomnomnom/hacks/inscope@latest
 ```
 
 #### Option B: Using Homebrew (if available)
@@ -89,7 +90,7 @@ Many of these tools are also available via Homebrew. If you prefer using Homebre
 
 ```bash
 # Check if tools are available in Homebrew
-brew install amass subfinder httpx nuclei ffuf gobuster dnsx hakrawler
+brew install amass subfinder httpx nuclei ffuf gobuster dnsx
 
 # For tools not available in Homebrew, you can still use Go:
 go install github.com/tomnomnom/assetfinder@latest
@@ -100,6 +101,8 @@ go install github.com/tomnomnom/fff@latest
 go install github.com/tomnomnom/anew@latest
 go install github.com/lc/gau/v2/cmd/gau@latest
 go install github.com/d3mondev/puredns/v2@latest
+go install github.com/hakluke/hakrawler@latest
+go install github.com/tomnomnom/hacks/inscope@latest
 ```
 
 Note: The availability of tools in Homebrew may change over time. You can check if a tool is available by running `brew search [tool-name]`. If a tool is not available via Homebrew, you can install it using Go as shown in Option A.
