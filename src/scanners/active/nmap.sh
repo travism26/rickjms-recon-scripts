@@ -8,6 +8,43 @@ source "$SCRIPT_DIR/src/core/logging.sh"
 source "$SCRIPT_DIR/src/core/utils.sh"
 source "$SCRIPT_DIR/config/settings.sh"
 
+# Signal handler function
+handle_signals() {
+    local signal=$1
+    local progress_pid=$2
+    local progress_file=$3
+    
+    debug "Received signal $signal in main process"
+    echo "[DEBUG] Main process received signal: $signal" >> "$progress_file"
+    
+    # Check if progress monitor is running
+    if [[ -n "$progress_pid" ]] && ps -p $progress_pid > /dev/null 2>&1; then
+        debug "Terminating progress monitor (PID: $progress_pid) due to signal $signal"
+        echo "[DEBUG] Terminating progress monitor due to signal $signal" >> "$progress_file"
+        kill -TERM $progress_pid 2>/dev/null
+        
+        # Give it a moment to terminate gracefully
+        sleep 1
+        
+        # Force kill if still running
+        if ps -p $progress_pid > /dev/null 2>&1; then
+            debug "Progress monitor did not terminate with TERM, sending KILL signal"
+            echo "[DEBUG] Sending KILL signal to progress monitor" >> "$progress_file"
+            kill -KILL $progress_pid 2>/dev/null
+        fi
+    fi
+    
+    # Copy debug logs to output directory before exiting
+    if [[ -f "$progress_file" ]]; then
+        mkdir -p "$POST_SCAN_ENUM" 2>/dev/null
+        cp "$progress_file" "$POST_SCAN_ENUM/nmap_debug.log" 2>/dev/null
+        info "Debug logs saved to: $POST_SCAN_ENUM/nmap_debug.log"
+    fi
+    
+    # Exit with appropriate code
+    exit 1
+}
+
 # Main Nmap scanning function
 run_nmap() {
     local USERIN="$1"
@@ -16,7 +53,8 @@ run_nmap() {
     local total_hosts
     local scan_type="default"
     local nmap_args=()
-    local progress_pid
+    local progress_pid=""
+    local progress_file=""
     
     debug "run_nmap($USERIN)"
     
@@ -65,11 +103,33 @@ run_nmap() {
         
         info "Using $scan_type scan profile for $total_hosts hosts"
         
-        # Set up progress monitoring
-        local progress_file=$(mktemp)
+        # Create temp file for progress monitoring
+        progress_file=$(mktemp)
+        debug "Creating progress monitoring process with temp file: $progress_file"
+        
+        # Set up signal handlers for the main process
+        trap 'handle_signals TERM "$progress_pid" "$progress_file"' TERM
+        trap 'handle_signals INT "$progress_pid" "$progress_file"' INT
+        trap 'handle_signals HUP "$progress_pid" "$progress_file"' HUP
         (
+            # Add trap for debugging process termination
+            trap 'echo "[DEBUG] Progress monitor received signal - PID: $$" >> "$progress_file"' TERM INT
+            
+            debug_pid=$$
+            echo "[DEBUG] Progress monitor started with PID: $debug_pid" >> "$progress_file"
+            
+            # Ensure the output directory exists
+            mkdir -p "$POST_SCAN_ENUM" 2>/dev/null
+            echo "[DEBUG] Ensuring output directory exists: $POST_SCAN_ENUM" >> "$progress_file"
+            
             while true; do
-                if [[ -f "$POST_SCAN_ENUM/${NMAPOUT}.gnmap" ]]; then
+                # Check if the process should exit (parent process might have terminated)
+                if ! ps -p $PPID > /dev/null 2>&1; then
+                    echo "[DEBUG] Parent process no longer exists, exiting progress monitor" >> "$progress_file"
+                    exit 0
+                fi
+                
+                if [[ -d "$POST_SCAN_ENUM" ]] && [[ -f "$POST_SCAN_ENUM/${NMAPOUT}.gnmap" ]]; then
                     scanned=$(grep -c "Host:" "$POST_SCAN_ENUM/${NMAPOUT}.gnmap" 2>/dev/null || echo 0)
                     scanned=$(echo "$scanned" | tr -d '\n')
                     current_time=$(date +%s)
@@ -81,21 +141,78 @@ run_nmap() {
                         rate=$(( scanned / (elapsed + 1) ))
                     fi
                     info "Progress: $scanned/$total_hosts ($percent%) at $rate hosts/sec - Elapsed: ${elapsed}s"
+                    echo "[DEBUG] Progress update: $scanned/$total_hosts ($percent%) at $rate hosts/sec - Elapsed: ${elapsed}s" >> "$progress_file"
+                else
+                    if [[ ! -d "$POST_SCAN_ENUM" ]]; then
+                        echo "[DEBUG] Output directory does not exist: $POST_SCAN_ENUM" >> "$progress_file"
+                        mkdir -p "$POST_SCAN_ENUM" 2>/dev/null
+                    else
+                        echo "[DEBUG] Waiting for gnmap file: $POST_SCAN_ENUM/${NMAPOUT}.gnmap" >> "$progress_file"
+                    fi
                 fi
                 sleep 30
             done
         ) &
         progress_pid=$!
+        debug "Progress monitoring process started with PID: $progress_pid"
         
         # Run the scan
-        if ! nmap "${nmap_args[@]}" 2>/dev/null; then
-            kill $progress_pid 2>/dev/null
-            error "Nmap scan failed" 1
+        debug "Starting nmap scan with args: ${nmap_args[*]}"
+        if ! nmap "${nmap_args[@]}" 2>"$progress_file.nmap_errors"; then
+            debug "Nmap scan failed, checking error log: $progress_file.nmap_errors"
+            cat "$progress_file.nmap_errors" >> "$progress_file"
+            debug "Terminating progress monitor (PID: $progress_pid)"
+            kill -TERM $progress_pid 2>/dev/null
+            wait $progress_pid 2>/dev/null
+            debug "Progress monitor termination result: $?"
+            error "Nmap scan failed. See debug log for details." 1
+            # Copy debug logs to output directory
+            cp "$progress_file" "$POST_SCAN_ENUM/nmap_debug.log" 2>/dev/null
+            info "Debug logs saved to: $POST_SCAN_ENUM/nmap_debug.log"
             return 1
         fi
         
-        # Clean up progress monitoring
-        kill $progress_pid 2>/dev/null
+        # Clean up progress monitoring with more robust error handling
+        debug "Nmap scan completed successfully, terminating progress monitor (PID: $progress_pid)"
+        
+        # Check if process is still running
+        if ps -p $progress_pid > /dev/null 2>&1; then
+            debug "Progress monitor is still running, sending TERM signal"
+            kill -TERM $progress_pid 2>/dev/null
+            term_result=$?
+            debug "TERM signal result: $term_result"
+            
+            # Give it a moment to terminate gracefully
+            sleep 1
+            
+            # Check if it's still running after TERM
+            if ps -p $progress_pid > /dev/null 2>&1; then
+                debug "Progress monitor did not terminate with TERM, sending KILL signal"
+                kill -KILL $progress_pid 2>/dev/null
+                kill_result=$?
+                debug "KILL signal result: $kill_result"
+            else
+                debug "Progress monitor terminated successfully with TERM signal"
+            fi
+        else
+            debug "Progress monitor (PID: $progress_pid) is no longer running"
+        fi
+        
+        # Wait for any child processes to complete
+        wait $progress_pid 2>/dev/null
+        wait_result=$?
+        debug "Wait result for progress monitor: $wait_result"
+        
+        # Add process state information to debug log
+        echo "[DEBUG] Process termination summary:" >> "$progress_file"
+        echo "[DEBUG] Progress PID: $progress_pid" >> "$progress_file"
+        echo "[DEBUG] Process state before termination:" >> "$progress_file"
+        ps -p $progress_pid -o pid,ppid,stat,cmd 2>/dev/null >> "$progress_file" || echo "[DEBUG] Process not found in ps output" >> "$progress_file"
+        
+        # Copy debug logs to output directory
+        mkdir -p "$POST_SCAN_ENUM" 2>/dev/null
+        cp "$progress_file" "$POST_SCAN_ENUM/nmap_debug.log" 2>/dev/null
+        info "Debug logs saved to: $POST_SCAN_ENUM/nmap_debug.log"
         
         # Generate scan statistics
         local end_time=$(date +%s)
@@ -144,6 +261,9 @@ run_nmap() {
         info "Consider running Naffy's recommended scan:"
         echo "nmap -T4 -iL $USERIN -Pn --script=http-title -p80,4443,4080,443 --open"
     fi
+    
+    # Reset signal handlers
+    trap - TERM INT HUP
 }
 
 # Check if a port is likely to be filtered by a firewall

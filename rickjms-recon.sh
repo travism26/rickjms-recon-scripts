@@ -78,7 +78,7 @@ run_scans() {
     
     if ! isLightScan; then
         # Certificate Transparency
-        run_crtsh "$TARGET_LIST"
+        run_crtsh_with_file "$TARGET_LIST"
         
         # TLS Bufferover
         run_tls_bufferover "$TARGET_LIST"
