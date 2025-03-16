@@ -61,6 +61,32 @@ generate_report() {
             echo
         fi
         
+        # Google Dorking Results
+        if [[ -f "$SCAN_FOLDER/google_dorks.out" ]]; then
+            echo "#### Google Dorking"
+            echo "- Total domains analyzed: $(wc -l < "$SCAN_FOLDER/google_dorks.out")"
+            echo
+            echo "For detailed Google dork queries, see the Google Dork Analysis Report."
+            echo
+        fi
+        
+        # ASN Enumeration Results
+        if [[ -f "$SCAN_FOLDER/asn_enum.out" ]]; then
+            echo "#### ASN Enumeration"
+            echo "- Total domains analyzed: $(wc -l < "$SCAN_FOLDER/asn_enum.out")"
+            
+            # Count unique CIDRs
+            local cidr_count=0
+            if [[ -f "$SCAN_FOLDER/asn_intel/unique_cidrs.txt" ]]; then
+                cidr_count=$(wc -l < "$SCAN_FOLDER/asn_intel/unique_cidrs.txt")
+                echo "- Unique CIDRs discovered: $cidr_count"
+            fi
+            
+            echo
+            echo "For detailed ASN information, see the ASN Enumeration Report."
+            echo
+        fi
+        
         # Active Reconnaissance Results
         echo "### Active Reconnaissance"
         echo
@@ -116,6 +142,73 @@ generate_report() {
             echo
         fi
         
+        # Directory Enumeration Results
+        if [[ -f "$POST_SCAN_ENUM/dir_enum.out" ]]; then
+            echo "#### Directory Enumeration"
+            echo "- Total URLs analyzed: $(wc -l < "$POST_SCAN_ENUM/dir_enum.out")"
+            echo
+            echo "For detailed directory enumeration results, see the Directory Enumeration Report."
+            echo
+        fi
+        
+        # Parameter Discovery Results
+        if [[ -f "$POST_SCAN_ENUM/param_discovery.out" ]]; then
+            echo "#### Parameter Discovery"
+            echo "- Total URLs analyzed: $(wc -l < "$POST_SCAN_ENUM/param_discovery.out")"
+            echo
+            echo "For detailed parameter discovery results, see the Parameter Discovery Report."
+            echo
+        fi
+        
+        # Vulnerability Scanning Results
+        if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]] && [[ -s "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
+            echo "#### Vulnerability Scanning"
+            
+            # Count vulnerabilities by severity using jq if available
+            local total_critical=0
+            local total_high=0
+            local total_medium=0
+            local total_low=0
+            local total_info=0
+            
+            if command -v jq &>/dev/null; then
+                # Use jq for proper JSON parsing
+                total_critical=$(jq -r '[.[] | select(.severity=="critical")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_high=$(jq -r '[.[] | select(.severity=="high")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_medium=$(jq -r '[.[] | select(.severity=="medium")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_low=$(jq -r '[.[] | select(.severity=="low")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_info=$(jq -r '[.[] | select(.severity=="info")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+            else
+                # Fallback to grep with safer error handling
+                total_critical=$(grep -c '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_high=$(grep -c '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_medium=$(grep -c '"severity":"medium"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_low=$(grep -c '"severity":"low"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_info=$(grep -c '"severity":"info"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+            fi
+            
+            # Ensure all variables are integers
+            total_critical=${total_critical:-0}
+            total_high=${total_high:-0}
+            total_medium=${total_medium:-0}
+            total_low=${total_low:-0}
+            total_info=${total_info:-0}
+            
+            # Calculate total with proper arithmetic
+            local total_vulns=0
+            total_vulns=$((total_critical + total_high + total_medium + total_low + total_info))
+            
+            echo "- Total potential vulnerabilities: $total_vulns"
+            echo "- Critical: $total_critical"
+            echo "- High: $total_high"
+            echo "- Medium: $total_medium"
+            echo "- Low: $total_low"
+            echo "- Informational: $total_info"
+            echo
+            echo "For detailed vulnerability findings, see the Vulnerability Scan Report."
+            echo
+        fi
+        
         # Interesting Findings
         echo "### Notable Findings"
         echo
@@ -146,6 +239,97 @@ generate_report() {
                 echo "- Found in: ${file#$OUTPUT_DIR/}"
             fi
         done
+        
+        # Critical Vulnerabilities
+        if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]] && [[ -s "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
+            echo
+            echo "#### Critical and High Vulnerabilities"
+            echo
+            
+            # Extract critical vulnerabilities with safer approach
+            local critical_vulns=""
+            if command -v jq &>/dev/null; then
+                critical_vulns=$(jq -r '.[] | select(.severity=="critical") | "| " + .name + " | " + .["matched-at"] + " | " + .["template-id"] + " |"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | head -n 5)
+            else
+                critical_vulns=$(grep -A 20 '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' 2>/dev/null | head -n 5)
+            fi
+            
+            if [[ -n "$critical_vulns" ]]; then
+                echo "##### Critical Vulnerabilities"
+                echo "| Vulnerability | URL | Template ID |"
+                echo "|---------------|-----|------------|"
+                echo "$critical_vulns"
+                echo
+            fi
+            
+            # Extract high vulnerabilities with safer approach
+            local high_vulns=""
+            if command -v jq &>/dev/null; then
+                high_vulns=$(jq -r '.[] | select(.severity=="high") | "| " + .name + " | " + .["matched-at"] + " | " + .["template-id"] + " |"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | head -n 5)
+            else
+                high_vulns=$(grep -A 20 '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' 2>/dev/null | head -n 5)
+            fi
+            
+            if [[ -n "$high_vulns" ]]; then
+                echo "##### High Vulnerabilities"
+                echo "| Vulnerability | URL | Template ID |"
+                echo "|---------------|-----|------------|"
+                echo "$high_vulns"
+                echo
+            fi
+            
+            echo "For complete vulnerability details, see the Vulnerability Scan Report."
+        fi
+        
+        # Interesting Parameters
+        if [[ -d "$POST_SCAN_ENUM/param_discovery" ]]; then
+            echo
+            echo "#### Interesting Parameters"
+            echo
+            
+            # Security-related parameters
+            echo "##### Security-Related Parameters"
+            find "$POST_SCAN_ENUM/param_discovery" -name "*_params.json" -exec jq -r '.get_parameters[], .post_parameters[] | select(. | test("token|key|auth|pass|secret|jwt|session|access|csrf|xsrf|permission|admin|role|priv"))' {} \; 2>/dev/null | sort -u | head -n 10 | while read -r param; do
+                echo "- $param"
+            done
+            
+            echo
+            echo "##### File Operation Parameters"
+            find "$POST_SCAN_ENUM/param_discovery" -name "*_params.json" -exec jq -r '.get_parameters[], .post_parameters[] | select(. | test("file|path|folder|directory|upload|download|doc|attachment|name|filename"))' {} \; 2>/dev/null | sort -u | head -n 10 | while read -r param; do
+                echo "- $param"
+            done
+            
+            echo
+            echo "##### Redirect Parameters"
+            find "$POST_SCAN_ENUM/param_discovery" -name "*_params.json" -exec jq -r '.get_parameters[], .post_parameters[] | select(. | test("url|link|redirect|return|next|target|goto|dest|destination|continue|proceed"))' {} \; 2>/dev/null | sort -u | head -n 10 | while read -r param; do
+                echo "- $param"
+            done
+            
+            echo
+            echo "For complete parameter details, see the Parameter Discovery Report."
+        fi
+        
+        # Interesting Directories
+        if [[ -d "$POST_SCAN_ENUM/dir_enum" ]]; then
+            echo
+            echo "#### Interesting Directories"
+            echo
+            
+            # Admin interfaces
+            echo "##### Admin/Management Interfaces"
+            find "$POST_SCAN_ENUM/dir_enum" -name "*_dirs.json" -exec jq -r '.results[] | select(.url | test("admin|manager|console|dashboard|cp|portal|login")) | "- [\(.status)] \(.url)"' {} \; 2>/dev/null | sort -u | head -n 10
+            
+            echo
+            echo "##### API Endpoints"
+            find "$POST_SCAN_ENUM/dir_enum" -name "*_dirs.json" -exec jq -r '.results[] | select(.url | test("api|graphql|v1|v2|rest|soap|swagger|openapi")) | "- [\(.status)] \(.url)"' {} \; 2>/dev/null | sort -u | head -n 10
+            
+            echo
+            echo "##### Potentially Sensitive Files"
+            find "$POST_SCAN_ENUM/dir_enum" -name "*_dirs.json" -exec jq -r '.results[] | select(.url | test("\\.log|\\.bak|\\.conf|\\.config|\\.sql|\\.xml|\\.json|\\.env|\\.git")) | "- [\(.status)] \(.url)"' {} \; 2>/dev/null | sort -u | head -n 10
+            
+            echo
+            echo "For complete directory enumeration details, see the Directory Enumeration Report."
+        fi
         
         # Statistics
         echo

@@ -1,21 +1,29 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Set the base directory for the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Import configuration and core modules
-source "$(dirname "${BASH_SOURCE[0]}")/config/settings.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/core/logging.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/core/validation.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/core/utils.sh"
+source "$SCRIPT_DIR/config/settings.sh"
+source "$SCRIPT_DIR/src/core/logging.sh"
+source "$SCRIPT_DIR/src/core/validation.sh"
+source "$SCRIPT_DIR/src/core/utils.sh"
 
 # Import scanner modules
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/crtsh.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/tls_bufferover.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/passive/wayback.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/nmap.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/http_probe.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/src/scanners/active/crawler.sh"
+source "$SCRIPT_DIR/src/scanners/passive/crtsh.sh"
+source "$SCRIPT_DIR/src/scanners/passive/tls_bufferover.sh"
+source "$SCRIPT_DIR/src/scanners/passive/wayback.sh"
+source "$SCRIPT_DIR/src/scanners/passive/google_dorks.sh"
+source "$SCRIPT_DIR/src/scanners/passive/asn_enum.sh"
+source "$SCRIPT_DIR/src/scanners/active/nmap.sh"
+source "$SCRIPT_DIR/src/scanners/active/http_probe.sh"
+source "$SCRIPT_DIR/src/scanners/active/crawler.sh"
+source "$SCRIPT_DIR/src/scanners/active/dir_enum.sh"
+source "$SCRIPT_DIR/src/scanners/active/param_discovery.sh"
+source "$SCRIPT_DIR/src/scanners/active/vuln_scan.sh"
 
 # Import reporting module
-source "$(dirname "${BASH_SOURCE[0]}")/src/reporting/report_generator.sh"
+source "$SCRIPT_DIR/src/reporting/report_generator.sh"
 
 # Consolidate targets from file or single target
 consolidateTargets() {
@@ -26,10 +34,33 @@ consolidateTargets() {
     
     if filePassed; then
         debug "File passed, copying contents to target list"
-        cat "$USER_FILE" > "$TARGET_LIST"
+        
+        # Process each line in the input file
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            # Check if line is a wildcard pattern
+            if [[ "$line" == *"*."* ]]; then
+                debug "Wildcard pattern detected: $line"
+                # Extract the base domain from wildcard pattern
+                base_domain=$(echo "$line" | sed 's/^\*\.//')
+                echo "$base_domain" >> "$TARGET_LIST"
+                info "Converted wildcard pattern to base domain: $base_domain"
+            else
+                # Regular domain or IP, add as-is
+                echo "$line" >> "$TARGET_LIST"
+            fi
+        done < "$USER_FILE"
     else
         debug "Single target passed, adding to target list"
-        echo "$USER_TARGET" > "$TARGET_LIST"
+        # Check if target is a wildcard pattern
+        if [[ "$USER_TARGET" == *"*."* ]]; then
+            debug "Wildcard pattern detected in target: $USER_TARGET"
+            # Extract the base domain from wildcard pattern
+            base_domain=$(echo "$USER_TARGET" | sed 's/^\*\.//')
+            echo "$base_domain" >> "$TARGET_LIST"
+            info "Converted wildcard pattern to base domain: $base_domain"
+        else
+            echo "$USER_TARGET" > "$TARGET_LIST"
+        fi
     fi
     
     # Count total targets
@@ -47,7 +78,7 @@ run_scans() {
     
     if ! isLightScan; then
         # Certificate Transparency
-        run_crtsh "$TARGET_LIST"
+        run_crtsh_with_file "$TARGET_LIST"
         
         # TLS Bufferover
         run_tls_bufferover "$TARGET_LIST"
@@ -56,6 +87,12 @@ run_scans() {
         if ! skipWaybackUrl; then
             run_waybackurls "$TARGET_LIST"
         fi
+        
+        # Google Dorking
+        run_google_dorks "$TARGET_LIST"
+        
+        # ASN Enumeration
+        run_asn_enum "$TARGET_LIST"
     else
         info "Light scan mode enabled - skipping intensive passive recon"
     fi
@@ -73,11 +110,31 @@ run_scans() {
     # Web Crawling and JavaScript Analysis
     if ! isLightScan; then
         run_hakrawler "$TARGET_LIST"
-        run_subdomainizer "$TARGET_LIST"
+        # Disabled subdomainizer as it's not working
+        # run_subdomainizer "$TARGET_LIST"
+        
+        # Directory Enumeration
+        run_dir_enum "$TARGET_LIST"
+        
+        # Parameter Discovery
+        run_param_discovery "$TARGET_LIST"
+        
+        # Vulnerability Scanning
+        run_vuln_scan "$TARGET_LIST"
     fi
     
-    # Generate Report
+    # Generate Reports
+    info "Generating reports"
     generate_report "$OUTPUT_DIR"
+    
+    # Generate additional reports
+    if ! isLightScan; then
+        generate_google_dork_report "$OUTPUT_DIR"
+        generate_asn_report "$OUTPUT_DIR"
+        generate_dir_enum_report "$OUTPUT_DIR"
+        generate_param_discovery_report "$OUTPUT_DIR"
+        generate_vuln_report "$OUTPUT_DIR"
+    fi
     
     # Show execution time
     local end_time=$(date +%s)
