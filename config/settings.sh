@@ -14,7 +14,6 @@ REQUIRED_TOOLS=(
     "httpx"
     "httprobe"
     "hakrawler"
-    "SubDomainizer"
     "dnmasscan"
     "waybackurls"
     "subjack"
@@ -72,10 +71,10 @@ JS_SCANNING=""
 
 # Tool-specific settings
 NMAP_FAST_SCAN_THRESHOLD=1000  # Number of hosts above which to use fast scan mode
-HTTPROBE_CONCURRENT=60         # Number of concurrent connections for httprobe
-SUBFINDER_THREADS=100          # Number of threads for subfinder
-SUBJACK_THREADS=100           # Number of threads for subjack
-FFF_DEPTH=100                 # Depth for fff crawler
+HTTPROBE_CONCURRENT=30         # Reduced concurrent connections for httprobe
+SUBFINDER_THREADS=50           # Reduced threads for subfinder
+SUBJACK_THREADS=50             # Reduced threads for subjack
+FFF_DEPTH=50                   # Reduced depth for fff crawler
 
 # Error handling
 MAX_RETRIES=3                 # Maximum number of retries for failed operations

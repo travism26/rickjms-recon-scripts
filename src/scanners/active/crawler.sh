@@ -26,8 +26,8 @@ run_hakrawler() {
         # Create temporary file for output
         temp_output=$(mktemp)
         
-        # Run hakrawler with enhanced features
-        if cat "$USERIN" | hakrawler -d 3 -h -u -s > "$temp_output" 2>/dev/null; then
+        # Run hakrawler with enhanced features and rate limiting
+        if cat "$USERIN" | hakrawler -d 2 -h -u -s -t 10 > "$temp_output" 2>/dev/null; then
             if [[ -s "$temp_output" ]]; then
                 # Process and deduplicate URLs
                 sort -u "$temp_output" > "$CRAWLING/$HAKOUT"

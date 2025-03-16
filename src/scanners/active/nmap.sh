@@ -26,7 +26,13 @@ run_nmap() {
         info "Starting Nmap scan on targets from: $USERIN"
         
         # Count total hosts
-        total_hosts=$(wc -l < "$USERIN")
+        total_hosts=$(grep -v "^$" "$USERIN" | wc -l)
+        if [[ -z "$total_hosts" ]] || [[ "$total_hosts" -le 0 ]]; then
+            warn "No valid hosts found in input file for Nmap scan"
+            info "This may happen if the scope contains only wildcard domains"
+            info "Try using a scope file with specific hostnames or IP addresses"
+            return 0
+        fi
         start_time=$(date +%s)
         
         # Build scan arguments based on host count
@@ -35,9 +41,9 @@ run_nmap() {
             scan_type="fast"
             nmap_args=(
                 "-iL" "$USERIN"
-                "-T4"
+                "-T3"
                 "-Pn"
-                "--min-rate=1000"
+                "--min-rate=500"
                 "--max-retries=2"
                 "-p" "$PORTS_TO_SCAN"
                 "--open"
@@ -48,10 +54,11 @@ run_nmap() {
             scan_type="detailed"
             nmap_args=(
                 "-iL" "$USERIN"
-                "-T4"
+                "-T3"
                 "-A"
                 "-p" "$PORTS_TO_SCAN"
-                "--version-intensity=5"
+                "--version-intensity=4"
+                "--max-rate=300"
                 "-oA" "$POST_SCAN_ENUM/$NMAPOUT"
             )
         fi
@@ -63,11 +70,16 @@ run_nmap() {
         (
             while true; do
                 if [[ -f "$POST_SCAN_ENUM/${NMAPOUT}.gnmap" ]]; then
-                    local scanned=$(grep -c "Host:" "$POST_SCAN_ENUM/${NMAPOUT}.gnmap" || echo 0)
-                    local current_time=$(date +%s)
-                    local elapsed=$((current_time - start_time))
-                    local percent=$((scanned * 100 / total_hosts))
-                    local rate=$(( scanned / (elapsed + 1) ))
+                    scanned=$(grep -c "Host:" "$POST_SCAN_ENUM/${NMAPOUT}.gnmap" 2>/dev/null || echo 0)
+                    scanned=$(echo "$scanned" | tr -d '\n')
+                    current_time=$(date +%s)
+                    elapsed=$((current_time - start_time))
+                    percent=0
+                    rate=0
+                    if [[ $total_hosts -gt 0 ]] && [[ $scanned -ge 0 ]]; then
+                        percent=$((scanned * 100 / total_hosts))
+                        rate=$(( scanned / (elapsed + 1) ))
+                    fi
                     info "Progress: $scanned/$total_hosts ($percent%) at $rate hosts/sec - Elapsed: ${elapsed}s"
                 fi
                 sleep 30

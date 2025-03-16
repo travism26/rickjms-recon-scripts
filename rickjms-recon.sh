@@ -34,10 +34,33 @@ consolidateTargets() {
     
     if filePassed; then
         debug "File passed, copying contents to target list"
-        cat "$USER_FILE" > "$TARGET_LIST"
+        
+        # Process each line in the input file
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            # Check if line is a wildcard pattern
+            if [[ "$line" == *"*."* ]]; then
+                debug "Wildcard pattern detected: $line"
+                # Extract the base domain from wildcard pattern
+                base_domain=$(echo "$line" | sed 's/^\*\.//')
+                echo "$base_domain" >> "$TARGET_LIST"
+                info "Converted wildcard pattern to base domain: $base_domain"
+            else
+                # Regular domain or IP, add as-is
+                echo "$line" >> "$TARGET_LIST"
+            fi
+        done < "$USER_FILE"
     else
         debug "Single target passed, adding to target list"
-        echo "$USER_TARGET" > "$TARGET_LIST"
+        # Check if target is a wildcard pattern
+        if [[ "$USER_TARGET" == *"*."* ]]; then
+            debug "Wildcard pattern detected in target: $USER_TARGET"
+            # Extract the base domain from wildcard pattern
+            base_domain=$(echo "$USER_TARGET" | sed 's/^\*\.//')
+            echo "$base_domain" >> "$TARGET_LIST"
+            info "Converted wildcard pattern to base domain: $base_domain"
+        else
+            echo "$USER_TARGET" > "$TARGET_LIST"
+        fi
     fi
     
     # Count total targets
@@ -87,7 +110,8 @@ run_scans() {
     # Web Crawling and JavaScript Analysis
     if ! isLightScan; then
         run_hakrawler "$TARGET_LIST"
-        run_subdomainizer "$TARGET_LIST"
+        # Disabled subdomainizer as it's not working
+        # run_subdomainizer "$TARGET_LIST"
         
         # Directory Enumeration
         run_dir_enum "$TARGET_LIST"

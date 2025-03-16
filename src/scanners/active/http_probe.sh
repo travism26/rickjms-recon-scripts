@@ -26,9 +26,9 @@ run_httpx() {
         # Create temporary file for output
         temp_output=$(mktemp)
         
-        # Run httpx with enhanced features
+        # Run httpx with enhanced features - reduced rate limit for bug bounty
         if cat "$USERIN" | httpx -silent -title -tech-detect -status-code -follow-redirects \
-            -threads 50 -rate-limit 150 -timeout 10 \
+            -threads 25 -rate-limit 50 -timeout 10 \
             -no-color 2>/dev/null > "$temp_output"; then
             
             # Process and analyze results
@@ -96,8 +96,8 @@ run_httprobe() {
         # Create temporary file for output
         temp_output=$(mktemp)
         
-        # Run httprobe with concurrent connections
-        if cat "$USERIN" | httprobe -c "$HTTPROBE_CONCURRENT" > "$temp_output" 2>/dev/null; then
+        # Run httprobe with concurrent connections and delay between requests
+        if cat "$USERIN" | httprobe -c "$HTTPROBE_CONCURRENT" -t 10000 > "$temp_output" 2>/dev/null; then
             if [[ -s "$temp_output" ]]; then
                 # Process results
                 sort -u "$temp_output" > "$ALIVE/$HTTPROBEOUT"

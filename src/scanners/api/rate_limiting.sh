@@ -6,9 +6,15 @@ source "$(dirname "${BASH_SOURCE[0]}")/../../core/logging.sh"
 # Rate limiting configuration - using indexed arrays instead of associative arrays
 # Format: API_NAME:LIMIT
 API_RATE_LIMITS=(
-    "tls_bufferover:60"  # requests per minute
-    "crtsh:60"          # requests per minute
-    "wayback:100"       # requests per minute
+    "tls_bufferover:30"  # requests per minute (reduced for bug bounty)
+    "crtsh:30"          # requests per minute (reduced for bug bounty)
+    "wayback:50"       # requests per minute (reduced for bug bounty)
+    "httpx:50"         # requests per minute
+    "httprobe:30"      # requests per minute
+    "hakrawler:20"     # requests per minute
+    "subfinder:30"     # requests per minute
+    "assetfinder:30"   # requests per minute
+    "amass:20"         # requests per minute
 )
 
 # Format: API_NAME:TIMESTAMP
@@ -16,6 +22,12 @@ LAST_API_CALL=(
     "tls_bufferover:0"
     "crtsh:0"
     "wayback:0"
+    "httpx:0"
+    "httprobe:0"
+    "hakrawler:0"
+    "subfinder:0"
+    "assetfinder:0"
+    "amass:0"
 )
 
 # Get rate limit for an API

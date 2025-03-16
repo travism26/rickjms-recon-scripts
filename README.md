@@ -14,12 +14,14 @@ A collection of advanced reconnaissance scripts for security research and bug bo
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/rickjms/rickjms-recon-scripts.git
 cd rickjms-recon-scripts
 ```
 
 2. Install required tools:
+
 ```bash
 ./install-rickjms-tools.sh
 ```
@@ -63,16 +65,19 @@ Options:
 ## Examples
 
 1. Scan a single domain:
+
 ```bash
 ./rickjms-recon.sh -t example.com
 ```
 
 2. Scan multiple domains from a file:
+
 ```bash
 ./rickjms-recon.sh -f domains.txt
 ```
 
 3. Run a light scan with custom output directory:
+
 ```bash
 ./rickjms-recon.sh -t example.com -l -o /path/to/output
 ```
@@ -97,22 +102,40 @@ output_dir/
 ## Features
 
 ### Passive Reconnaissance
+
 - Certificate Transparency scanning (crt.sh)
 - TLS Bufferover data collection
 - Wayback Machine URL discovery
 - Rate-limited API interactions
 
 ### Active Reconnaissance
+
 - Port scanning with Nmap (adaptive scan based on target count)
 - HTTP service detection with httpx and httprobe
 - Web crawling with hakrawler
 - JavaScript analysis with SubDomainizer
 
 ### Reporting
+
 - Comprehensive Markdown reports
 - Optional HTML report generation
 - Detailed statistics and findings
 - Security concern highlighting
+
+### kill running scans
+
+```bash
+# To find running processes:
+
+ps aux | grep -E 'nmap|rickjms' - Lists processes containing "nmap" or "rickjms"
+pgrep -fl nmap or pgrep -fl rickjms - Lists process IDs and full command lines
+ps -ef | grep nmap - Alternative way to list processes
+
+# To kill processes:
+kill [PID] - Sends a termination signal to the process (e.g., kill 43222 43848)
+kill -9 [PID] - Force kills a process if it doesn't respond to normal termination
+pkill -f "rickjms-recon.sh" - Kills all processes matching the pattern
+```
 
 ## Architecture
 

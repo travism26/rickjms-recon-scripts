@@ -47,10 +47,7 @@ check_requirements() {
         fi
     done
     
-    # Special check for SubDomainizer as it's a Python script
-    if ! python3 -c "import SubDomainizer" 2>/dev/null; then
-        missing_tools+=("SubDomainizer (Python package)")
-    fi
+    # SubDomainizer check is skipped as it's been disabled in the main script
 
     if [ ${#missing_tools[@]} -ne 0 ]; then
         echo "Error: Required tools are missing:"
