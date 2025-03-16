@@ -15,6 +15,7 @@ API_RATE_LIMITS=(
     "subfinder:30"     # requests per minute
     "assetfinder:30"   # requests per minute
     "amass:20"         # requests per minute
+    # "google:10" entry removed - not needed as we don't make actual requests to Google
 )
 
 # Format: API_NAME:TIMESTAMP
@@ -28,6 +29,7 @@ LAST_API_CALL=(
     "subfinder:0"
     "assetfinder:0"
     "amass:0"
+    # "google:0" entry removed - not needed as we don't make actual requests to Google
 )
 
 # Get rate limit for an API
@@ -94,12 +96,19 @@ rate_limit() {
     local last_call=$(get_last_call "$api_name")
     local current_time=$(date +%s)
     local time_diff=$((current_time - last_call))
-    local min_interval=$((60 / rate_limit))
-
-    if [[ $time_diff -lt $min_interval ]]; then
-        local sleep_time=$((min_interval - time_diff))
-        debug "Rate limiting $api_name, sleeping for ${sleep_time}s"
-        sleep "$sleep_time"
+    
+    # Check if rate limit is 0 or not set
+    if [[ $rate_limit -eq 0 ]]; then
+        debug "No rate limit defined for $api_name, using default 6s delay"
+        sleep 6  # Default delay of 6 seconds if no rate limit is defined
+    else
+        local min_interval=$((60 / rate_limit))
+        
+        if [[ $time_diff -lt $min_interval ]]; then
+            local sleep_time=$((min_interval - time_diff))
+            debug "Rate limiting $api_name, sleeping for ${sleep_time}s"
+            sleep "$sleep_time"
+        fi
     fi
 
     update_last_call "$api_name" "$(date +%s)"

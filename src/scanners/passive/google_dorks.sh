@@ -70,14 +70,9 @@ run_google_dorks() {
                 echo "## Search URL: https://www.google.com/search?q=$encoded_query" >> "$domain_file"
                 echo "" >> "$domain_file"
                 
-                # Apply rate limiting
-                rate_limit "google"
-                
                 # Note: We don't actually scrape Google results here as that would violate ToS
                 # Instead, we provide the search URLs for manual investigation
-                
-                # Add a small delay between requests
-                sleep 2
+                # No rate limiting needed since we're not making actual requests to Google
             done
             
             info "Completed Google dork generation for $domain"

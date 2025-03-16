@@ -161,16 +161,42 @@ generate_report() {
         fi
         
         # Vulnerability Scanning Results
-        if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
+        if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]] && [[ -s "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
             echo "#### Vulnerability Scanning"
             
-            # Count vulnerabilities by severity
-            local total_critical=$(grep -c '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-            local total_high=$(grep -c '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-            local total_medium=$(grep -c '"severity":"medium"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-            local total_low=$(grep -c '"severity":"low"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-            local total_info=$(grep -c '"severity":"info"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-            local total_vulns=$((total_critical + total_high + total_medium + total_low + total_info))
+            # Count vulnerabilities by severity using jq if available
+            local total_critical=0
+            local total_high=0
+            local total_medium=0
+            local total_low=0
+            local total_info=0
+            
+            if command -v jq &>/dev/null; then
+                # Use jq for proper JSON parsing
+                total_critical=$(jq -r '[.[] | select(.severity=="critical")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_high=$(jq -r '[.[] | select(.severity=="high")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_medium=$(jq -r '[.[] | select(.severity=="medium")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_low=$(jq -r '[.[] | select(.severity=="low")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_info=$(jq -r '[.[] | select(.severity=="info")] | length' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+            else
+                # Fallback to grep with safer error handling
+                total_critical=$(grep -c '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_high=$(grep -c '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_medium=$(grep -c '"severity":"medium"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_low=$(grep -c '"severity":"low"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_info=$(grep -c '"severity":"info"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+            fi
+            
+            # Ensure all variables are integers
+            total_critical=${total_critical:-0}
+            total_high=${total_high:-0}
+            total_medium=${total_medium:-0}
+            total_low=${total_low:-0}
+            total_info=${total_info:-0}
+            
+            # Calculate total with proper arithmetic
+            local total_vulns=0
+            total_vulns=$((total_critical + total_high + total_medium + total_low + total_info))
             
             echo "- Total potential vulnerabilities: $total_vulns"
             echo "- Critical: $total_critical"
@@ -215,13 +241,18 @@ generate_report() {
         done
         
         # Critical Vulnerabilities
-        if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
+        if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]] && [[ -s "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
             echo
             echo "#### Critical and High Vulnerabilities"
             echo
             
-            # Extract critical vulnerabilities
-            local critical_vulns=$(grep -A 20 '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' | head -n 5)
+            # Extract critical vulnerabilities with safer approach
+            local critical_vulns=""
+            if command -v jq &>/dev/null; then
+                critical_vulns=$(jq -r '.[] | select(.severity=="critical") | "| " + .name + " | " + .["matched-at"] + " | " + .["template-id"] + " |"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | head -n 5)
+            else
+                critical_vulns=$(grep -A 20 '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' 2>/dev/null | head -n 5)
+            fi
             
             if [[ -n "$critical_vulns" ]]; then
                 echo "##### Critical Vulnerabilities"
@@ -231,8 +262,13 @@ generate_report() {
                 echo
             fi
             
-            # Extract high vulnerabilities
-            local high_vulns=$(grep -A 20 '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' | head -n 5)
+            # Extract high vulnerabilities with safer approach
+            local high_vulns=""
+            if command -v jq &>/dev/null; then
+                high_vulns=$(jq -r '.[] | select(.severity=="high") | "| " + .name + " | " + .["matched-at"] + " | " + .["template-id"] + " |"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | head -n 5)
+            else
+                high_vulns=$(grep -A 20 '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' 2>/dev/null | head -n 5)
+            fi
             
             if [[ -n "$high_vulns" ]]; then
                 echo "##### High Vulnerabilities"

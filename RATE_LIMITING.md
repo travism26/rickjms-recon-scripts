@@ -48,17 +48,20 @@ Web crawling settings in `src/scanners/active/crawler.sh` have been modified:
 
 API rate limits in `src/scanners/api/rate_limiting.sh` have been updated:
 
-| API/Service    | Rate Limit (requests/minute) | Notes            |
-| -------------- | ---------------------------- | ---------------- |
-| tls_bufferover | 30                           | Reduced from 60  |
-| crtsh          | 30                           | Reduced from 60  |
-| wayback        | 50                           | Reduced from 100 |
-| httpx          | 50                           | New limit        |
-| httprobe       | 30                           | New limit        |
-| hakrawler      | 20                           | New limit        |
-| subfinder      | 30                           | New limit        |
-| assetfinder    | 30                           | New limit        |
-| amass          | 20                           | New limit        |
+| API/Service    | Rate Limit (requests/minute) | Notes                    |
+| -------------- | ---------------------------- | ------------------------ |
+| tls_bufferover | 30                           | Reduced from 60          |
+| crtsh          | 30                           | Reduced from 60          |
+| wayback        | 50                           | Reduced from 100         |
+| httpx          | 50                           | New limit                |
+| httprobe       | 30                           | New limit                |
+| hakrawler      | 20                           | New limit                |
+| subfinder      | 30                           | New limit                |
+| assetfinder    | 30                           | New limit                |
+| amass          | 20                           | New limit                |
+| google         | 10                           | Removed - see note below |
+
+> **Note about Google Dorks**: Rate limiting for Google dorks has been removed since the script doesn't actually make HTTP requests to Google. It only generates search URLs for manual investigation, so rate limiting was unnecessary.
 
 ## Running with Additional Rate Limiting
 
