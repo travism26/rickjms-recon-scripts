@@ -331,6 +331,132 @@ generate_report() {
             echo "For complete directory enumeration details, see the Directory Enumeration Report."
         fi
         
+        # Recommended Follow-up Scans
+        echo
+        echo "### Recommended Follow-up Scans"
+        echo
+        echo "Based on the initial reconnaissance findings, the following targeted scans are recommended for deeper investigation:"
+        echo
+        
+        # WAF Bypass Scanning
+        echo "#### WAF Bypass Scanning"
+        echo
+        if grep -q "WAF\|Cloudflare\|blocking\|rate limit" "$ALIVE/httpx_analysis.txt" 2>/dev/null || grep -q "WAF\|Cloudflare\|blocking\|rate limit" "$CRAWLING/hakrawler_analysis.txt" 2>/dev/null; then
+            echo "**WAF detected - Use these rate-limited approaches:**"
+            echo
+            echo "\`\`\`bash"
+            echo "# Amass with custom settings for WAF bypass"
+            echo "amass enum -d $TARGET_DOMAIN -active -max-dns-queries 50 -dns-qps 5 -timeout 10"
+            echo
+            echo "# Nuclei with rate limiting and custom user agents"
+            echo "nuclei -l alive_subdomains.txt -H \"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36\" -rl 10 -timeout 10"
+            echo "\`\`\`"
+        else
+            echo "**No WAF detected - Standard scanning approaches should work:**"
+            echo
+            echo "\`\`\`bash"
+            echo "# Amass with active enumeration"
+            echo "amass enum -d $TARGET_DOMAIN -active"
+            echo "\`\`\`"
+        fi
+        echo
+        
+        # Pattern-Based Subdomain Discovery
+        echo "#### Pattern-Based Subdomain Discovery"
+        echo
+        echo "Based on discovered naming patterns, create a custom wordlist for targeted brute forcing:"
+        echo
+        echo "\`\`\`bash"
+        echo "# Extract naming patterns from discovered subdomains"
+        echo "cat subdomains.txt | cut -d. -f1 > naming_patterns.txt"
+        echo
+        echo "# Use for targeted brute forcing"
+        echo "amass enum -d $TARGET_DOMAIN -brute -w custom_wordlist.txt"
+        echo "ffuf -w custom_wordlist.txt -u https://FUZZ.$TARGET_DOMAIN"
+        echo "\`\`\`"
+        echo
+        echo "**Suggested wordlist patterns based on discovered subdomains:**"
+        echo
+        
+        # Extract subdomain patterns if crt.sh results exist
+        if [[ -f "$SCAN_FOLDER/crtsh.host.out" ]]; then
+            echo "- Product/service names: $(cat "$SCAN_FOLDER/crtsh.host.out" | cut -d. -f1 | grep -v -E '^[0-9]+$' | sort -u | head -n 5 | tr '\n' ', ' | sed 's/,$//')"
+            echo "- Environment prefixes: dev, staging, test, uat, qa, sandbox"
+            echo "- Common services: api, admin, portal, login, dashboard, console"
+        else
+            echo "- Environment prefixes: dev, staging, test, uat, qa, sandbox"
+            echo "- Common services: api, admin, portal, login, dashboard, console"
+            echo "- Product variations: mobile, app, web, internal, partner"
+        fi
+        echo
+        
+        # Targeted Service Scanning
+        echo "#### Targeted Service Scanning"
+        echo
+        echo "Focus on specific services and potential vulnerabilities:"
+        echo
+        echo "\`\`\`bash"
+        echo "# For discovered admin interfaces"
+        echo "nuclei -l admin_interfaces.txt -t admin-panels/ -t exposed-panels/ -severity critical,high"
+        echo
+        echo "# For API endpoints"
+        echo "nuclei -l api_endpoints.txt -t api/ -severity critical,high"
+        echo
+        echo "# For specific technologies detected"
+        # Extract detected technologies from httpx analysis
+        if [[ -f "$ALIVE/httpx_analysis.txt" ]]; then
+            # Look for common web technologies in the httpx output
+            for tech in $(grep -o -E "WordPress|Drupal|Joomla|Laravel|Django|Rails|Node\.js|Express|React|Angular|Vue|PHP|ASP\.NET|Java|Tomcat|Nginx|Apache|IIS|Cloudflare|WAF" "$ALIVE/httpx_analysis.txt" 2>/dev/null | sort -u); do
+                # Convert to lowercase for nuclei template path
+                tech_lower=$(echo "$tech" | tr '[:upper:]' '[:lower:]' | sed 's/\.//g')
+                echo "nuclei -l alive_subdomains.txt -t technologies/$tech_lower/ -t exposures/configs/"
+            done
+        else
+            echo "# Run technology detection first:"
+            echo "nuclei -l alive_subdomains.txt -t technologies/ -severity info"
+        fi
+        echo "\`\`\`"
+        echo
+        
+        # Manual Investigation Tools
+        echo "#### Manual Investigation Tools"
+        echo
+        if grep -q "blocking\|WAF\|protection" "$CRAWLING/hakrawler_analysis.txt" 2>/dev/null; then
+            echo "**Automated crawling appears to be blocked. Try these manual approaches:**"
+            echo
+            echo "\`\`\`bash"
+            echo "# Stealthy directory enumeration"
+            echo "gobuster dir -u https://TARGET -w wordlist.txt -a \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36\" --delay 5s"
+            echo
+            echo "# Manual tools:"
+            echo "# - Burp Suite with browser integration"
+            echo "# - Browser DevTools for network analysis"
+            echo "# - OWASP ZAP for passive scanning"
+            echo "\`\`\`"
+        else
+            echo "\`\`\`bash"
+            echo "# Standard content discovery"
+            echo "ffuf -w wordlist.txt -u https://TARGET/FUZZ"
+            echo "dirsearch -u https://TARGET -w wordlist.txt"
+            echo "\`\`\`"
+        fi
+        echo
+        
+        # Historical Data Analysis
+        echo "#### Historical Data Analysis"
+        echo
+        echo "When live crawling is limited, historical data can reveal valuable endpoints:"
+        echo
+        echo "\`\`\`bash"
+        echo "# Gather URLs from various sources"
+        echo "gau --subs $TARGET_DOMAIN | grep -E \"dev|staging|test|admin|internal\""
+        echo "waybackurls $TARGET_DOMAIN | grep -E \"api|graphql|v1|v2\""
+        echo
+        echo "# Find potentially sensitive files"
+        echo "gau --subs $TARGET_DOMAIN | grep -E \"\\.json|\\.xml|\\.yaml|\\.txt|\\.sql|\\.bak|\\.config\""
+        echo "\`\`\`"
+        echo
+        
         # Statistics
         echo
         echo "### Scan Statistics"
