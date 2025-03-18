@@ -28,6 +28,10 @@ skipWaybackUrl() {
     [ "$SKIPWAYBACK" = "true" ]
 }
 
+skipAmass() {
+    [ "$SKIPAMASS" = "true" ]
+}
+
 # Cleanup function
 cleanup() {
     local exit_code=$?
@@ -56,6 +60,7 @@ Usage() {
     echo -e "\t-d \t\t\tEnable Debugging mode"
     echo -e "\t-l \t\t\tLIGHT SCAN Mode Only run the quick scans (assetfinder, crt.sh, tls.bufferover.run)"
     echo -e "\t-w \t\t\tSkip the waybackurl lookup."
+    echo -e "\t-a \t\t\tSkip the amass tool (faster for large domain lists)."
 }
 
 # Process command line arguments
@@ -65,7 +70,7 @@ userInput() {
         exit 0
     fi
 
-    while getopts "hf:no:dt:slw" flag; do
+    while getopts "hf:no:dt:slwa" flag; do
         case $flag in
             h)
                 Usage
@@ -103,6 +108,9 @@ userInput() {
                 ;;
             w)
                 SKIPWAYBACK="true"
+                ;;
+            a)
+                SKIPAMASS="true"
                 ;;
             *)
                 Usage

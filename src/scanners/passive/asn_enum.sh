@@ -44,7 +44,10 @@ run_asn_enum() {
             info "Finding ASNs for organization: $org_name"
             echo "## ASNs for organization: $org_name" >> "$domain_file"
             
-            if amass intel -org "$org_name" 2>/dev/null | tee -a "$domain_file" | grep -q "ASN"; then
+            if skipAmass; then
+                warn "Skipping amass for ASN enumeration (flag -a used)"
+                echo "Amass scan skipped (flag -a used)" >> "$domain_file"
+            elif amass intel -org "$org_name" 2>/dev/null | tee -a "$domain_file" | grep -q "ASN"; then
                 info "Found ASNs for $org_name"
             else
                 warn "No ASNs found for $org_name"
@@ -57,7 +60,10 @@ run_asn_enum() {
             info "Finding domains from WHOIS records for: $domain"
             echo "## Domains from WHOIS records" >> "$domain_file"
             
-            if amass intel -d "$domain" -whois 2>/dev/null | tee -a "$domain_file" | grep -q "found"; then
+            if skipAmass; then
+                warn "Skipping amass for WHOIS lookup (flag -a used)"
+                echo "Amass WHOIS lookup skipped (flag -a used)" >> "$domain_file"
+            elif amass intel -d "$domain" -whois 2>/dev/null | tee -a "$domain_file" | grep -q "found"; then
                 info "Found domains from WHOIS for $domain"
             else
                 warn "No domains found from WHOIS for $domain"
@@ -76,7 +82,10 @@ run_asn_enum() {
                 while IFS= read -r asn; do
                     info "Enumerating CIDRs for ASN: $asn"
                     
-                    if amass intel -asn "$asn" 2>/dev/null | tee -a "$domain_cidr_file" | grep -q "CIDR"; then
+                    if skipAmass; then
+                        warn "Skipping amass for CIDR enumeration (flag -a used)"
+                        echo "Amass CIDR enumeration skipped (flag -a used)" >> "$domain_cidr_file"
+                    elif amass intel -asn "$asn" 2>/dev/null | tee -a "$domain_cidr_file" | grep -q "CIDR"; then
                         info "Found CIDRs for ASN $asn"
                     else
                         warn "No CIDRs found for ASN $asn"
@@ -183,6 +192,47 @@ generate_asn_report() {
             echo "2. Identify critical infrastructure within these networks"
             echo "3. Look for additional domains hosted on the same infrastructure"
             echo "4. Map the organization's network topology based on ASN information"
+            
+            # Add amass commands if they were skipped
+            if skipAmass; then
+                echo ""
+                echo "## Manual Amass Commands"
+                echo ""
+                echo "Amass was skipped during this scan. If you want more comprehensive results, you can run these commands manually:"
+                echo ""
+                echo "```bash"
+                echo "# For each domain in your target list:"
+                
+                if [[ -d "$SCAN_FOLDER/asn_intel" ]]; then
+                    for domain_file in "$SCAN_FOLDER/asn_intel/"*_asn.txt; do
+                        if [[ -f "$domain_file" ]]; then
+                            domain=$(basename "$domain_file" _asn.txt)
+                            org_name=$(echo "$domain" | awk -F. '{print $(NF-1)}')
+                            
+                            echo "# For domain: $domain"
+                            echo "amass intel -org \"$org_name\"  # Find ASNs for organization"
+                            echo "amass intel -d \"$domain\" -whois  # Find domains from WHOIS"
+                            
+                            # If we have ASNs in the file (from other sources), add commands for them
+                            if grep -q "ASN:" "$domain_file"; then
+                                echo "# For ASNs discovered through other means:"
+                                grep "ASN:" "$domain_file" | awk '{print $2}' | sort -u | while read -r asn; do
+                                    echo "amass intel -asn \"$asn\"  # Find CIDRs for ASN $asn"
+                                done
+                            fi
+                            
+                            echo ""
+                        fi
+                    done
+                else
+                    # If no domain files exist, provide generic examples
+                    echo "amass intel -org \"organization_name\"  # Find ASNs for organization"
+                    echo "amass intel -d \"example.com\" -whois  # Find domains from WHOIS"
+                    echo "amass intel -asn \"AS12345\"  # Find CIDRs for a specific ASN"
+                fi
+                
+                echo "```"
+            fi
             
         } > "$report_file"
         
