@@ -71,7 +71,7 @@ save_state() {
     if [[ ! -f "$output_dir/$STATE_FILE" ]]; then
         error "State file not found: $output_dir/$STATE_FILE"
         return 1
-    }
+    fi
     
     # Create temporary file for atomic write
     local temp_file=$(mktemp)
@@ -106,7 +106,7 @@ mark_completed() {
     if [[ ! -f "$output_dir/$STATE_FILE" ]]; then
         error "State file not found: $output_dir/$STATE_FILE"
         return 1
-    }
+    fi
     
     # Create temporary file for atomic write
     local temp_file=$(mktemp)
@@ -146,13 +146,13 @@ load_state() {
             error "State file not found: $output_dir/$STATE_FILE"
             return 1
         fi
-    }
+    fi
     
     # Validate state file
     if ! validate_state "$output_dir"; then
         error "State file validation failed"
         return 1
-    }
+    fi
     
     # Load state into environment variables
     export SCAN_ID=$(jq -r '.scan_id' "$output_dir/$STATE_FILE")
@@ -182,7 +182,7 @@ validate_state() {
     if ! jq empty "$output_dir/$STATE_FILE" 2>/dev/null; then
         error "State file is not valid JSON"
         return 1
-    }
+    fi
     
     # Check required fields
     local required_fields=("scan_id" "start_time" "last_updated" "target_list" "output_dir" "scan_mode" "completed_scans" "scan_stats")
@@ -198,7 +198,7 @@ validate_state() {
     if [[ ! -f "$target_list" ]]; then
         warn "Target list file not found: $target_list"
         return 1
-    }
+    fi
     
     # Check if output directory matches
     local state_output_dir=$(jq -r '.output_dir' "$output_dir/$STATE_FILE")
@@ -209,7 +209,7 @@ validate_state() {
         jq ".output_dir = \"$output_dir\"" "$output_dir/$STATE_FILE" > "$temp_file"
         mv "$temp_file" "$output_dir/$STATE_FILE"
         info "Updated output directory in state file"
-    }
+    fi
     
     info "State file validation successful"
     return 0
@@ -225,7 +225,7 @@ check_completed() {
     if [[ -z "$COMPLETED_SCANS" ]]; then
         debug "COMPLETED_SCANS not set, scan not completed: $scan_name"
         return 1
-    }
+    fi
     
     # Check if scan is in completed scans
     if [[ "$COMPLETED_SCANS" == *"$scan_name"* ]]; then
