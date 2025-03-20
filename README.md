@@ -60,6 +60,7 @@ Options:
   -d                   Enable Debugging mode
   -l                   Light scan mode (quick scans only)
   -w                   Skip waybackurl lookup
+  -r                   Resume from last saved state (requires -o to specify output directory)
 ```
 
 ## Examples
@@ -80,6 +81,23 @@ Options:
 
 ```bash
 ./rickjms-recon.sh -t example.com -l -o /path/to/output
+```
+
+4. Resume an interrupted scan:
+
+```bash
+./rickjms-recon.sh -r -o /path/to/output
+```
+
+5. Interrupt a scan (Ctrl+C) and resume later:
+
+```bash
+# Start a scan
+./rickjms-recon.sh -t example.com -o /path/to/output
+
+# Interrupt with Ctrl+C during execution
+# Later, resume the scan
+./rickjms-recon.sh -r -o /path/to/output
 ```
 
 ## Output Structure
@@ -122,6 +140,14 @@ output_dir/
 - Detailed statistics and findings
 - Security concern highlighting
 
+### Continue Feature
+
+- Resume interrupted scans from where they left off
+- Preserves progress and avoids redundant work
+- State files track completed scan modules
+- Atomic state operations to prevent corruption
+- Automatic backup of state files
+
 ### kill running scans
 
 ```bash
@@ -149,7 +175,8 @@ The script is organized into modular components:
 │   ├── core/              # Core functionality
 │   │   ├── logging.sh     # Logging functions
 │   │   ├── validation.sh  # Input validation
-│   │   └── utils.sh       # Utility functions
+│   │   ├── utils.sh       # Utility functions
+│   │   └── state_manager.sh # State management for continue feature
 │   ├── scanners/          # Scanner modules
 │   │   ├── active/        # Active reconnaissance
 │   │   ├── passive/       # Passive reconnaissance

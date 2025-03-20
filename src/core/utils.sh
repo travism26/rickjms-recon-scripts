@@ -32,12 +32,37 @@ skipAmass() {
     [ "$SKIPAMASS" = "true" ]
 }
 
+isResumeMode() {
+    [ "$RESUME_MODE" = "true" ]
+}
+
+# Signal handler for interrupts
+handle_interrupt() {
+    info "Received interrupt signal. Saving state..."
+    
+    # Save current state if we're in the middle of a scan
+    if [[ -n "$CURRENT_SCAN" && -n "$OUTPUT_DIR" ]]; then
+        save_state "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
+        info "State saved. To resume, run with: -r -o $OUTPUT_DIR"
+    fi
+    
+    # Call the regular cleanup function
+    cleanup
+    
+    exit 1
+}
+
 # Cleanup function
 cleanup() {
     local exit_code=$?
     # Remove temporary files
     rm -f "$tmp_target_list" 2>/dev/null
-    rm -f "$TARGET_LIST" 2>/dev/null
+    
+    # Don't remove TARGET_LIST if we're in resume mode
+    if [[ "$RESUME_MODE" != "true" ]]; then
+        rm -f "$TARGET_LIST" 2>/dev/null
+    fi
+    
     exit $exit_code
 }
 
@@ -61,6 +86,7 @@ Usage() {
     echo -e "\t-l \t\t\tLIGHT SCAN Mode Only run the quick scans (assetfinder, crt.sh, tls.bufferover.run)"
     echo -e "\t-w \t\t\tSkip the waybackurl lookup."
     echo -e "\t-a \t\t\tSkip the amass tool (faster for large domain lists)."
+    echo -e "\t-r \t\t\tResume from last saved state (requires -o to specify output directory)."
 }
 
 # Process command line arguments
@@ -70,7 +96,7 @@ userInput() {
         exit 0
     fi
 
-    while getopts "hf:no:dt:slwa" flag; do
+    while getopts "hf:no:dt:slwar" flag; do
         case $flag in
             h)
                 Usage
@@ -112,6 +138,10 @@ userInput() {
             a)
                 SKIPAMASS="true"
                 ;;
+            r)
+                RESUME_MODE="true"
+                info "Resume mode enabled"
+                ;;
             *)
                 Usage
                 exit 2
@@ -127,10 +157,57 @@ userInput() {
 
 # Initialize scan environment
 init() {
-    # Generate folders
-    generate_folders
-    # Parse user input and get all targets into one file.
-    consolidateTargets
+    # Check if we're in resume mode
+    if isResumeMode; then
+        # Validate that output directory is specified
+        if [[ -z "$OUTPUT_DIR" ]]; then
+            error "Resume mode requires output directory (-o)" 2
+        fi
+        
+        # Check if state file exists
+        if [[ ! -f "$OUTPUT_DIR/$STATE_FILE" && ! -f "$OUTPUT_DIR/$STATE_FILE_BACKUP" ]]; then
+            error "No state file found in $OUTPUT_DIR" 2
+        fi
+        
+        # Load state
+        info "Loading state from $OUTPUT_DIR"
+        if ! load_state "$OUTPUT_DIR"; then
+            error "Failed to load state from $OUTPUT_DIR" 2
+        fi
+        
+        # Validate that directories exist
+        if [[ ! -d "$OUTPUT_DIR/scans" || ! -d "$OUTPUT_DIR/post-scanning" ]]; then
+            error "Output directory structure is incomplete" 2
+        fi
+        
+        # Set up directory variables
+        SCAN_FOLDER="$OUTPUT_DIR/scans"
+        POST_SCAN_ENUM="$OUTPUT_DIR/post-scanning"
+        POSSIBLE_OOS_TARGETS="$OUTPUT_DIR/maybe-out-scope"
+        
+        # Set up subdirectory variables
+        ALIVE="$POST_SCAN_ENUM/subdomains"
+        DNSCAN="$POST_SCAN_ENUM/dnmasscan"
+        HAKTRAILS="$POST_SCAN_ENUM/haktrails"
+        CRAWLING="$POST_SCAN_ENUM/website-crawling"
+        WAYBACKURL="$POST_SCAN_ENUM/waybackurls"
+        JS_SCANNING="$POST_SCAN_ENUM/js-endpoint-discovery"
+        
+        info "Resumed scan with ID: $SCAN_ID"
+        info "Completed scans: $COMPLETED_SCANS"
+        info "Current scan: $CURRENT_SCAN"
+        info "Progress: $PROCESSED_TARGETS/$TOTAL_TARGETS targets"
+    else
+        # Generate folders
+        generate_folders
+        # Parse user input and get all targets into one file.
+        consolidateTargets
+        # Initialize state
+        init_state "$OUTPUT_DIR" "$TARGET_LIST"
+    fi
+    
+    # Set up trap for interrupt signal
+    trap handle_interrupt INT
 }
 
 # Generate folder structure for scan outputs

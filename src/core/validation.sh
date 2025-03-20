@@ -48,6 +48,14 @@ check_requirements() {
     done
     
     # SubDomainizer check is skipped as it's been disabled in the main script
+    
+    # Check for continue feature dependencies
+    if isResumeMode; then
+        if ! command -v jq &> /dev/null; then
+            missing_tools+=("jq")
+            error "jq is required for resume mode. Please install it before using the resume feature."
+        fi
+    fi
 
     if [ ${#missing_tools[@]} -ne 0 ]; then
         echo "Error: Required tools are missing:"
