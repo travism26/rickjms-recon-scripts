@@ -224,7 +224,7 @@ generate_param_discovery_report() {
                 for json_file in "$POST_SCAN_ENUM/param_discovery/"*_params.json; do
                     if [[ -f "$json_file" ]]; then
                         local url=$(jq -r '.url' "$json_file" 2>/dev/null)
-                        jq -r '.get_parameters[], .post_parameters[] | select(. | test("token|key|auth|pass|secret|jwt|session|access|csrf|xsrf|permission|admin|role|priv"))' "$json_file" 2>/dev/null | sort -u | head -n 5 | sed "s/^/- $url: /" || true
+                        jq -r '.get_parameters[], .post_parameters[] | select(. | test("token|key|auth|pass|secret|jwt|session|access|csrf|xsrf|permission|admin|role|priv"))' "$json_file" 2>/dev/null | sort -u | head -n 5 | sed "s|^|- $url: |" || true
                     fi
                 done
                 
@@ -234,7 +234,7 @@ generate_param_discovery_report() {
                 for json_file in "$POST_SCAN_ENUM/param_discovery/"*_params.json; do
                     if [[ -f "$json_file" ]]; then
                         local url=$(jq -r '.url' "$json_file" 2>/dev/null)
-                        jq -r '.get_parameters[], .post_parameters[] | select(. | test("file|path|folder|directory|upload|download|doc|attachment|name|filename"))' "$json_file" 2>/dev/null | sort -u | head -n 5 | sed "s/^/- $url: /" || true
+                        jq -r '.get_parameters[], .post_parameters[] | select(. | test("file|path|folder|directory|upload|download|doc|attachment|name|filename"))' "$json_file" 2>/dev/null | sort -u | head -n 5 | sed "s|^|- $url: |" || true
                     fi
                 done
                 
@@ -244,7 +244,7 @@ generate_param_discovery_report() {
                 for json_file in "$POST_SCAN_ENUM/param_discovery/"*_params.json; do
                     if [[ -f "$json_file" ]]; then
                         local url=$(jq -r '.url' "$json_file" 2>/dev/null)
-                        jq -r '.get_parameters[], .post_parameters[] | select(. | test("url|link|redirect|return|next|target|goto|dest|destination|continue|proceed"))' "$json_file" 2>/dev/null | sort -u | head -n 5 | sed "s/^/- $url: /" || true
+                        jq -r '.get_parameters[], .post_parameters[] | select(. | test("url|link|redirect|return|next|target|goto|dest|destination|continue|proceed"))' "$json_file" 2>/dev/null | sort -u | head -n 5 | sed "s|^|- $url: |" || true
                     fi
                 done
             else

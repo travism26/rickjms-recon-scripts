@@ -233,7 +233,6 @@ generate_asn_report() {
                 
                 echo "```"
             fi
-            
         } > "$report_file"
         
         info "ASN enumeration report generated: $report_file"
