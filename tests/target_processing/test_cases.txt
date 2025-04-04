@@ -1,0 +1,35 @@
+# Test cases for target processing
+# Format: one target per line
+
+# Basic domains
+example.com
+sub.example.com
+
+# Domains with protocols
+https://example.com
+http://example.com
+
+# Domains with www
+www.example.com
+https://www.example.com
+
+# Domains with ports
+example.com:8080
+https://example.com:8443
+
+# Wildcard domains
+*.example.com
+*.sub.example.com
+
+# Complex cases
+https://www.sub.example.com:8443
+http://www.sub.test.example.com
+
+# IP addresses
+192.168.1.1
+10.0.0.1:8080
+
+# Invalid cases (these should be caught by validation)
+not-a-domain
+.example.com
+example

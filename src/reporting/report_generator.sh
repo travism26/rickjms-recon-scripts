@@ -251,7 +251,7 @@ generate_report() {
             if command -v jq &>/dev/null; then
                 critical_vulns=$(jq -r '.[] | select(.severity=="critical") | "| " + .name + " | " + .["matched-at"] + " | " + .["template-id"] + " |"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | head -n 5)
             else
-                critical_vulns=$(grep -A 20 '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' 2>/dev/null | head -n 5)
+                critical_vulns=$(grep -A 20 '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s|^|| |; s|$| |' 2>/dev/null | head -n 5)
             fi
             
             if [[ -n "$critical_vulns" ]]; then
@@ -267,7 +267,7 @@ generate_report() {
             if command -v jq &>/dev/null; then
                 high_vulns=$(jq -r '.[] | select(.severity=="high") | "| " + .name + " | " + .["matched-at"] + " | " + .["template-id"] + " |"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | head -n 5)
             else
-                high_vulns=$(grep -A 20 '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s/^/| /; s/$/ |/' 2>/dev/null | head -n 5)
+                high_vulns=$(grep -A 20 '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null | grep -E '"name"|"matched-at"|"template-id"' | paste -d '|' - - - 2>/dev/null | sed 's/"name"://g; s/"matched-at"://g; s/"template-id"://g; s/"//g; s/,//g; s/|/ | /g; s|^|| |; s|$| |' 2>/dev/null | head -n 5)
             fi
             
             if [[ -n "$high_vulns" ]]; then

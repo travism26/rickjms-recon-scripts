@@ -151,14 +151,31 @@ generate_vuln_report() {
             local total_info=0
             
             if [[ -f "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" ]]; then
-                total_critical=$(grep -c '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-                total_high=$(grep -c '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-                total_medium=$(grep -c '"severity":"medium"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-                total_low=$(grep -c '"severity":"low"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
-                total_info=$(grep -c '"severity":"info"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" || echo 0)
+                # Use grep with proper error handling to ensure we get numeric values
+                total_critical=$(grep -c '"severity":"critical"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_high=$(grep -c '"severity":"high"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_medium=$(grep -c '"severity":"medium"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_low=$(grep -c '"severity":"low"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                total_info=$(grep -c '"severity":"info"' "$POST_SCAN_ENUM/vuln_scan/all_vulnerabilities.json" 2>/dev/null || echo 0)
+                
+                # Ensure all variables contain only numeric values
+                total_critical=${total_critical//[^0-9]/}
+                total_high=${total_high//[^0-9]/}
+                total_medium=${total_medium//[^0-9]/}
+                total_low=${total_low//[^0-9]/}
+                total_info=${total_info//[^0-9]/}
+                
+                # Set to 0 if empty after sanitization
+                [[ -z "$total_critical" ]] && total_critical=0
+                [[ -z "$total_high" ]] && total_high=0
+                [[ -z "$total_medium" ]] && total_medium=0
+                [[ -z "$total_low" ]] && total_low=0
+                [[ -z "$total_info" ]] && total_info=0
             fi
             
-            local total_vulns=$((total_critical + total_high + total_medium + total_low + total_info))
+            # Calculate total with proper arithmetic evaluation
+            local total_vulns=0
+            total_vulns=$((total_critical + total_high + total_medium + total_low + total_info))
             
             echo "## Summary"
             echo ""

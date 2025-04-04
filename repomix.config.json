@@ -1,0 +1,14 @@
+{
+  "name": "rickjms-recon-scripts",
+  "version": "1.0.0",
+  "description": "Repomix configuration for rickjms-recon-scripts",
+  "ignore": {
+    "useIgnoreFile": true,
+    "ignoreFilePath": ".repomixignore"
+  },
+  "options": {
+    "includeHidden": false,
+    "maxDepth": 10,
+    "followSymlinks": false
+  }
+}

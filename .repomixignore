@@ -1,0 +1,17 @@
+# Repomix ignore file - Ignores all test files
+
+# Test files in root directory
+test-*.sh
+
+# Test directories
+testing/
+
+# Other test-related files that might be added in the future
+**/test/
+**/tests/
+**/*test*.sh
+**/*test*.py
+**/*test*.js
+**/*spec*.js
+**/*spec*.ts
+future_features/*

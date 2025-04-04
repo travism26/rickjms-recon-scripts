@@ -123,7 +123,7 @@ generate_google_dork_report() {
                     echo ""
                     
                     # Extract and list all search URLs
-                    grep "^## Search URL:" "$domain_file" | sed 's/^## Search URL: /- /' | sort -u
+                    grep "^## Search URL:" "$domain_file" | sed 's|^## Search URL: |- |' | sort -u
                     
                     echo ""
                     echo "For detailed queries, see: $(basename "$domain_file")"

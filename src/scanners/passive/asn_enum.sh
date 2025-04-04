@@ -216,9 +216,13 @@ generate_asn_report() {
                             # If we have ASNs in the file (from other sources), add commands for them
                             if grep -q "ASN:" "$domain_file"; then
                                 echo "# For ASNs discovered through other means:"
-                                grep "ASN:" "$domain_file" | awk '{print $2}' | sort -u | while read -r asn; do
+                                # Use a temporary file to avoid command substitution issues
+                                local asn_temp=$(mktemp)
+                                grep "ASN:" "$domain_file" | awk '{print $2}' | sort -u > "$asn_temp"
+                                while read -r asn; do
                                     echo "amass intel -asn \"$asn\"  # Find CIDRs for ASN $asn"
-                                done
+                                done < "$asn_temp"
+                                rm -f "$asn_temp"
                             fi
                             
                             echo ""
@@ -233,7 +237,6 @@ generate_asn_report() {
                 
                 echo "```"
             fi
-            
         } > "$report_file"
         
         info "ASN enumeration report generated: $report_file"

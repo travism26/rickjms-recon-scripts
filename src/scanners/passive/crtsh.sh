@@ -4,6 +4,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../../core/logging.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/../api/rate_limiting.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/../../core/utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../core/target_processing.sh"
 
 # Function to retry curl commands with exponential backoff
 retry_curl() {
@@ -70,23 +71,20 @@ run_crtsh() {
     local status
     local temp_output
 
-    # Validate input is a domain-like string (not a file path)
-    if [[ "$USERIN" == *"/"* ]]; then
-        error "Invalid domain name: $USERIN (contains path separators)"
+    # Process target for crt.sh (no protocol, handle wildcards)
+    local processed_target=$(process_target "$USERIN" "crtsh")
+    if [[ $? -ne 0 ]]; then
+        error "Invalid target format for crt.sh: $USERIN"
         return 1
     fi
-
-    # Basic domain validation - should contain at least one dot
-    if [[ "$USERIN" != *"."* ]]; then
-        error "Invalid domain name: $USERIN (missing domain extension)"
-        return 1
-    fi
+    
+    debug "Processed target for crt.sh: $processed_target"
 
 # curl -s "https://crt.sh/?q=%.$1&output=json" | jq -r '.[] | .name_value' | sed 's/\*\.//g' | sort -u
     if isDryRun; then
-        echo "curl -s \"https://crt.sh/?q=%.$USERIN&output=json\" | jq -r '.[] | .name_value' | sed 's/\*\.//g' | sort -u >> $SCAN_FOLDER/$CRTOUT"
+        echo "curl -s \"https://crt.sh/?q=%.$processed_target&output=json\" | jq -r '.[] | .name_value' | sed 's/\*\.//g' | sort -u >> $SCAN_FOLDER/$CRTOUT"
     else
-        info "Executing search crt.sh/?q=%.$USERIN"
+        info "Executing search crt.sh/?q=%.$processed_target"
         rate_limit "crtsh"
         
         # Create temporary file for output with error handling
@@ -94,7 +92,7 @@ run_crtsh() {
             error "Failed to create temporary file for crt.sh output" 1
             return 1
         }
-        curl_command="curl -s -w \"%{http_code}\" --max-time 30 \"https://crt.sh/?q=%.$USERIN&output=json\""
+        curl_command="curl -s -w \"%{http_code}\" --max-time 30 \"https://crt.sh/?q=%.$processed_target&output=json\""
         debug "curl_command: $curl_command"
         
         # Make the API call with retries
@@ -109,7 +107,7 @@ run_crtsh() {
         
         # Check if response has enough characters before extracting HTTP code
         if [[ ${#response} -lt 3 ]]; then
-            warn "crt.sh API returned an empty or invalid response for $USERIN (length: ${#response})"
+            warn "crt.sh API returned an empty or invalid response for $processed_target (length: ${#response})"
             rm -f "$temp_output"
             return 1
         fi
@@ -130,7 +128,7 @@ run_crtsh() {
         
         # Verify that http_code is a valid number and equals 200
         if ! [[ "$http_code" =~ ^[0-9]+$ ]] || [[ "$http_code" -ne 200 ]]; then
-            warn "crt.sh API returned invalid or non-200 HTTP code for $USERIN: $http_code"
+            warn "crt.sh API returned invalid or non-200 HTTP code for $processed_target: $http_code"
             rm -f "$temp_output"
             return 1
         fi
@@ -157,7 +155,7 @@ run_crtsh() {
                 sort -u > "$temp_output"
         else
             # Try to handle HTML responses (common when crt.sh is overloaded)
-            warn "crt.sh API returned invalid JSON for $USERIN, attempting to retry with different approach"
+            warn "crt.sh API returned invalid JSON for $processed_target, attempting to retry with different approach"
             
             # Save the first 100 chars of response for debugging
             debug "First 100 chars of response: $(echo "$response_body" | head -c 100)"
@@ -166,31 +164,31 @@ run_crtsh() {
             info "Retrying with direct HTML parsing approach"
             
             # Try with a longer timeout and different user agent
-            curl -s --max-time 60 -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" "https://crt.sh/?q=%.$USERIN" | \
-                grep -oE ">[a-zA-Z0-9._-]+\.${USERIN}<" | \
+            curl -s --max-time 60 -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" "https://crt.sh/?q=%.$processed_target" | \
+                grep -oE ">[a-zA-Z0-9._-]+\.${processed_target}<" | \
                 sed 's/>//g' | \
                 sed 's/<//g' | \
                 sort -u > "$temp_output"
                 
             # If that fails too, try a third approach
             if [[ ! -s "$temp_output" ]]; then
-                warn "Alternative approach also failed for $USERIN, trying last resort method"
+                warn "Alternative approach also failed for $processed_target, trying last resort method"
                 
                 # Last resort: try a simpler approach with a different pattern
                 # This is less accurate but more likely to work when the site is having issues
-                curl -s --max-time 60 -A "Mozilla/5.0" "https://crt.sh/?q=$USERIN" | \
-                    grep -o '[a-zA-Z0-9\._-]*\.\'"$USERIN" | \
+                curl -s --max-time 60 -A "Mozilla/5.0" "https://crt.sh/?q=$processed_target" | \
+                    grep -o '[a-zA-Z0-9\._-]*\.\'"$processed_target" | \
                     sort -u > "$temp_output"
                 
                 if [[ ! -s "$temp_output" ]]; then
-                    warn "All approaches failed for $USERIN"
+                    warn "All approaches failed for $processed_target"
                     rm -f "$temp_output"
                     return 1
                 fi
                 
-                info "Last resort approach succeeded for $USERIN"
+                info "Last resort approach succeeded for $processed_target"
             else
-                info "Alternative approach succeeded for $USERIN"
+                info "Alternative approach succeeded for $processed_target"
             fi
         fi
 
@@ -198,7 +196,7 @@ run_crtsh() {
         if [[ -s "$temp_output" ]]; then
             cat "$temp_output" >> "$SCAN_FOLDER/$CRTOUT"
             local found_count=$(wc -l < "$temp_output")
-            info "Found $found_count certificates for $USERIN"
+            info "Found $found_count certificates for $processed_target"
             
             # Log the first few results for verification
             if [[ $found_count -gt 0 && -n "${ENABLE_DEBUG:-}" ]]; then
@@ -208,7 +206,7 @@ run_crtsh() {
                 done
             fi
         else
-            warn "No certificates found for $USERIN"
+            warn "No certificates found for $processed_target"
         fi
 
         # Clean up
@@ -232,6 +230,9 @@ run_crtsh_with_file() {
 
     # Process each domain
     while IFS= read -r line; do
+        # Skip empty lines and comments
+        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        
         ((processed++))
         
         # Show progress

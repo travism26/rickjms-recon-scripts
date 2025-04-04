@@ -9,6 +9,7 @@ source "$SCRIPT_DIR/src/core/logging.sh"
 source "$SCRIPT_DIR/src/core/validation.sh"
 source "$SCRIPT_DIR/src/core/utils.sh"
 source "$SCRIPT_DIR/src/core/state_manager.sh"
+source "$SCRIPT_DIR/src/core/target_processing.sh"
 
 # Import scanner modules
 source "$SCRIPT_DIR/src/scanners/passive/crtsh.sh"
@@ -30,43 +31,64 @@ source "$SCRIPT_DIR/src/reporting/report_generator.sh"
 consolidateTargets() {
     debug "consolidateTargets()"
     
-    # Create temporary file for target list
-    TARGET_LIST=$(mktemp)
+    # Create temporary file for raw target list
+    local RAW_TARGET_LIST=$(mktemp)
     
+    # Create directory for tool-specific target lists
+    mkdir -p "$OUTPUT_DIR/targets"
+    
+    # Populate raw target list
     if filePassed; then
-        debug "File passed, copying contents to target list"
-        
-        # Process each line in the input file
-        while IFS= read -r line || [[ -n "$line" ]]; do
-            # Check if line is a wildcard pattern
-            if [[ "$line" == *"*."* ]]; then
-                debug "Wildcard pattern detected: $line"
-                # Extract the base domain from wildcard pattern
-                base_domain=$(echo "$line" | sed 's/^\*\.//')
-                echo "$base_domain" >> "$TARGET_LIST"
-                info "Converted wildcard pattern to base domain: $base_domain"
-            else
-                # Regular domain or IP, add as-is
-                echo "$line" >> "$TARGET_LIST"
-            fi
-        done < "$USER_FILE"
+        debug "File passed, copying contents to raw target list"
+        cat "$USER_FILE" > "$RAW_TARGET_LIST"
     else
-        debug "Single target passed, adding to target list"
-        # Check if target is a wildcard pattern
-        if [[ "$USER_TARGET" == *"*."* ]]; then
-            debug "Wildcard pattern detected in target: $USER_TARGET"
-            # Extract the base domain from wildcard pattern
-            base_domain=$(echo "$USER_TARGET" | sed 's/^\*\.//')
-            echo "$base_domain" >> "$TARGET_LIST"
-            info "Converted wildcard pattern to base domain: $base_domain"
-        else
-            echo "$USER_TARGET" > "$TARGET_LIST"
-        fi
+        debug "Single target passed, adding to raw target list"
+        echo "$USER_TARGET" > "$RAW_TARGET_LIST"
     fi
+    
+    # Create master target list
+    TARGET_LIST="$OUTPUT_DIR/targets/master_target_list.txt"
+    
+    # Process raw targets using default configuration
+    process_target_list "$RAW_TARGET_LIST" "$TARGET_LIST" "default"
+    
+    # Create tool-specific target lists
+    create_tool_target_lists
     
     # Count total targets
     local total_targets=$(wc -l < "$TARGET_LIST")
     info "Total targets to scan: $total_targets"
+    
+    # Clean up
+    rm -f "$RAW_TARGET_LIST"
+}
+
+# Create tool-specific target lists
+create_tool_target_lists() {
+    debug "Creating tool-specific target lists"
+    
+    # Define tools that need specific target formatting
+    local TOOLS=(
+        "crtsh"
+        "tls_bufferover"
+        "wayback"
+        "google_dorks"
+        "asn_enum"
+        "httpx"
+        "httprobe"
+        "nmap"
+        "hakrawler"
+        "dir_enum"
+        "param_discovery"
+        "vuln_scan"
+    )
+    
+    # Process target list for each tool
+    for tool in "${TOOLS[@]}"; do
+        local tool_target_list="$OUTPUT_DIR/targets/${tool}_targets.txt"
+        process_target_list "$TARGET_LIST" "$tool_target_list" "$tool"
+        debug "Created target list for $tool: $tool_target_list"
+    done
 }
 
 # Main scanning function
@@ -85,7 +107,7 @@ run_scans() {
         if ! check_completed "crtsh"; then
             export CURRENT_SCAN="crtsh"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_crtsh_with_file "$TARGET_LIST"
+            run_crtsh_with_file "$OUTPUT_DIR/targets/crtsh_targets.txt"
             mark_completed "$OUTPUT_DIR" "crtsh"
         else
             info "Skipping crtsh scan (already completed)"
@@ -95,7 +117,7 @@ run_scans() {
         if ! check_completed "tls_bufferover"; then
             export CURRENT_SCAN="tls_bufferover"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_tls_bufferover "$TARGET_LIST"
+            run_tls_bufferover "$OUTPUT_DIR/targets/tls_bufferover_targets.txt"
             mark_completed "$OUTPUT_DIR" "tls_bufferover"
         else
             info "Skipping tls_bufferover scan (already completed)"
@@ -106,7 +128,7 @@ run_scans() {
             if ! check_completed "waybackurls"; then
                 export CURRENT_SCAN="waybackurls"
                 save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-                run_waybackurls "$TARGET_LIST"
+                run_waybackurls "$OUTPUT_DIR/targets/wayback_targets.txt"
                 mark_completed "$OUTPUT_DIR" "waybackurls"
             else
                 info "Skipping waybackurls scan (already completed)"
@@ -117,7 +139,7 @@ run_scans() {
         if ! check_completed "google_dorks"; then
             export CURRENT_SCAN="google_dorks"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_google_dorks "$TARGET_LIST"
+            run_google_dorks "$OUTPUT_DIR/targets/google_dorks_targets.txt"
             mark_completed "$OUTPUT_DIR" "google_dorks"
         else
             info "Skipping google_dorks scan (already completed)"
@@ -127,7 +149,7 @@ run_scans() {
         if ! check_completed "asn_enum"; then
             export CURRENT_SCAN="asn_enum"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_asn_enum "$TARGET_LIST"
+            run_asn_enum "$OUTPUT_DIR/targets/asn_enum_targets.txt"
             mark_completed "$OUTPUT_DIR" "asn_enum"
         else
             info "Skipping asn_enum scan (already completed)"
@@ -143,7 +165,7 @@ run_scans() {
     if ! check_completed "httpx"; then
         export CURRENT_SCAN="httpx"
         save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-        run_httpx "$TARGET_LIST"
+        run_httpx "$OUTPUT_DIR/targets/httpx_targets.txt"
         mark_completed "$OUTPUT_DIR" "httpx"
     else
         info "Skipping httpx scan (already completed)"
@@ -152,7 +174,7 @@ run_scans() {
     if ! check_completed "httprobe"; then
         export CURRENT_SCAN="httprobe"
         save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-        run_httprobe "$TARGET_LIST"
+        run_httprobe "$OUTPUT_DIR/targets/httprobe_targets.txt"
         mark_completed "$OUTPUT_DIR" "httprobe"
     else
         info "Skipping httprobe scan (already completed)"
@@ -162,7 +184,7 @@ run_scans() {
     if ! check_completed "nmap"; then
         export CURRENT_SCAN="nmap"
         save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-        run_nmap "$TARGET_LIST"
+        run_nmap "$OUTPUT_DIR/targets/nmap_targets.txt"
         mark_completed "$OUTPUT_DIR" "nmap"
     else
         info "Skipping nmap scan (already completed)"
@@ -173,7 +195,7 @@ run_scans() {
         if ! check_completed "hakrawler"; then
             export CURRENT_SCAN="hakrawler"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_hakrawler "$TARGET_LIST"
+            run_hakrawler "$OUTPUT_DIR/targets/hakrawler_targets.txt"
             mark_completed "$OUTPUT_DIR" "hakrawler"
         else
             info "Skipping hakrawler scan (already completed)"
@@ -185,7 +207,7 @@ run_scans() {
         if ! check_completed "dir_enum"; then
             export CURRENT_SCAN="dir_enum"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_dir_enum "$TARGET_LIST"
+            run_dir_enum "$OUTPUT_DIR/targets/dir_enum_targets.txt"
             mark_completed "$OUTPUT_DIR" "dir_enum"
         else
             info "Skipping dir_enum scan (already completed)"
@@ -195,7 +217,7 @@ run_scans() {
         if ! check_completed "param_discovery"; then
             export CURRENT_SCAN="param_discovery"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_param_discovery "$TARGET_LIST"
+            run_param_discovery "$OUTPUT_DIR/targets/param_discovery_targets.txt"
             mark_completed "$OUTPUT_DIR" "param_discovery"
         else
             info "Skipping param_discovery scan (already completed)"
@@ -205,7 +227,7 @@ run_scans() {
         if ! check_completed "vuln_scan"; then
             export CURRENT_SCAN="vuln_scan"
             save_progress "$OUTPUT_DIR" "$CURRENT_SCAN" "$PROCESSED_TARGETS"
-            run_vuln_scan "$TARGET_LIST"
+            run_vuln_scan "$OUTPUT_DIR/targets/vuln_scan_targets.txt"
             mark_completed "$OUTPUT_DIR" "vuln_scan"
         else
             info "Skipping vuln_scan scan (already completed)"
