@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Guard to prevent multiple sourcing
+if [[ -n "${LOGGING_SOURCED:-}" ]]; then
+    return 0
+fi
+export LOGGING_SOURCED=1
+
 # Logging colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

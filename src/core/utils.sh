@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Guard to prevent multiple sourcing
+if [[ -n "${UTILS_SOURCED:-}" ]]; then
+    return 0
+fi
+export UTILS_SOURCED=1
+
 # Import logging functions
 source "$(dirname "${BASH_SOURCE[0]}")/logging.sh"
 
